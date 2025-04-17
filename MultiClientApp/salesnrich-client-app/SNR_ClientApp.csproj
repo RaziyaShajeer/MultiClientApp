@@ -1,0 +1,63 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net7.0-windows</TargetFramework>
+		<Nullable>enable</Nullable>
+		<UseWindowsForms>true</UseWindowsForms>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<ApplicationIcon>logo.ico</ApplicationIcon>
+		<StartupObject>SNR_ClientApp.Program</StartupObject>
+		<PackageIcon>logo.png</PackageIcon>
+		<AssemblyName>SalesNrich</AssemblyName>
+		<PlatformTarget>x64</PlatformTarget>
+
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Compile Remove="Windows\Settings\**" />
+		<EmbeddedResource Remove="Windows\Settings\**" />
+		<None Remove="Windows\Settings\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Include="logo.ico" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="EPPlus" Version="6.2.3" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Xml" Version="9.0.3" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
+		<PackageReference Include="System.Collections.NonGeneric" Version="4.3.0" />
+		<PackageReference Include="System.Configuration.ConfigurationManager" Version="9.0.3" />
+		<PackageReference Include="System.Data.Odbc" Version="7.0.0" />
+		<PackageReference Include="System.Management" Version="7.0.0" />
+	
+	</ItemGroup>
+
+	<ItemGroup>
+		<Compile Update="Properties\Resources.Designer.cs">
+			<DesignTime>True</DesignTime>
+			<AutoGen>True</AutoGen>
+			<DependentUpon>Resources.resx</DependentUpon>
+		</Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Update="Properties\Resources.resx">
+			<Generator>ResXFileCodeGenerator</Generator>
+			<LastGenOutput>Resources.Designer.cs</LastGenOutput>
+		</EmbeddedResource>
+		<EmbeddedResource Update="Resources\ClientAppProps.resx">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</EmbeddedResource>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="..\..\..\..\..\utils\ClientAppUtils\images\logo.png">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+
+</Project>
