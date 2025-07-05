@@ -43,8 +43,9 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
 
         private void LoadDefaultValues()
         {
-            bindDatasFromProperties();
-            LoadAccountGroupsParents();
+            ApplicationProperties.getAllProperties(StringUtilsCustom.TALLY_COMPANY);
+			bindDatasFromProperties();
+			LoadAccountGroupsParents();
             LoadAccountGroupsCustomers();
 
         }
@@ -77,7 +78,14 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
         {
             try
             {
-                String[] row = await tallyService.getAllGroups();
+				var groups = await tallyService.getAllGroups();
+
+				AccountGroupsSelect.Items.Clear();
+				AccountGroupsSelect.Items.AddRange(groups.ToArray());
+				SalesLedgerParentSelect.Items.Clear();
+				SalesLedgerParentSelect.Items.AddRange(groups.ToArray());
+                String[] row = new String[10];
+                    await tallyService.getAllGroups();
                 accountGroupParents = row;
                 AccountGroupsSelect.Items.Clear();
                 AccountGroupsSelect.Items.AddRange(row);
@@ -91,7 +99,7 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
                         var item = row.Select(i => i).Where(i => i.ToString().Equals(gstParent)).SingleOrDefault();
                         AccountGroupsSelect.SelectedItem = item;
                         loadGstLedgers(gstParent);
-                    }
+                     }
                     //AccountGroupsSelect.SelectedItem = gstParent;
                     //loadGstLedgers(gstParent);
                 }
@@ -100,6 +108,11 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
                     AccountGroupsSelect.SelectedItem = "Duties & Taxes";
                     loadGstLedgers("Duties & Taxes");
                 }
+                else if(row.Contains("DUTIES & TAXES"))
+                {
+					AccountGroupsSelect.SelectedItem = "DUTIES & TAXES";
+					loadGstLedgers("DUTIES & TAXES");
+				}
                 else if (row.Count()>0)
                 {
                     AccountGroupsSelect.SelectedItem = row[0];
@@ -132,7 +145,7 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
         private async void loadSalesLedgers(string Parent)
         {
             String[] row = await tallyService.getAllLedgersNamesByParent(Parent);
-            String[] salesLedgers = { "" };
+             String[] salesLedgers = { "" };
             //salesLedgers[0] = "";
 
             SalesLedgerSelect.DataSource = salesLedgers.Concat(row).ToArray();
@@ -152,6 +165,8 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
         }
 
         private async void loadGstLedgers(String Parent)
+                    
+                       
         {
             try
             {
@@ -277,52 +292,44 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
         private void bindDatasFromProperties()
         {
 
-           
-            var autodownload = ApplicationProperties.properties["AutoDownload"].ToString();
-            chk_download.Checked=false;
-            txt_downloadtime.Enabled=false;
+			var autodownload = ApplicationProperties.properties["AutoDownload"].ToString();
+			chk_download.Checked = false;
+			txt_downloadtime.Enabled = false;
 
-            var AutoDownloadTimePeriod = ApplicationProperties.properties["AutoDownloadTimePeriod"].ToString();
-            if (autodownload.Equals("true", StringComparison.OrdinalIgnoreCase))
-            {
-                chk_download.Checked=true;
-                txt_downloadtime.Enabled=true;
-                txt_downloadtime.Text=AutoDownloadTimePeriod;
-            }
-            var autoUpload = ApplicationProperties.properties["AutoUpload"].ToString();
-            chk_upload.Checked=false;
-            txt_uploadtime.Enabled=false;
-            var AutoUploadTimePeriod = ApplicationProperties.properties["AutoUploadTimePeriod"].ToString();
-            if (autoUpload.Equals("true", StringComparison.OrdinalIgnoreCase))
-            {
-                chk_upload.Checked=true;
-                txt_uploadtime.Enabled=true;
-                txt_uploadtime.Text=AutoUploadTimePeriod;
+			var AutoDownloadTimePeriod = ApplicationProperties.properties["AutoDownloadTimePeriod"].ToString();
+			if (autodownload.Equals("true", StringComparison.OrdinalIgnoreCase))
+			{
+				chk_download.Checked = true;
+				txt_downloadtime.Enabled = true;
+				txt_downloadtime.Text = AutoDownloadTimePeriod;
+			}
+			var autoUpload = ApplicationProperties.properties["AutoUpload"].ToString();
+			chk_upload.Checked = false;
+			txt_uploadtime.Enabled = false;
+			var AutoUploadTimePeriod = ApplicationProperties.properties["AutoUploadTimePeriod"].ToString();
+			if (autoUpload.Equals("true", StringComparison.OrdinalIgnoreCase))
+			{
+				chk_upload.Checked = true;
+				txt_uploadtime.Enabled = true;
+				txt_uploadtime.Text = AutoUploadTimePeriod;
 
-            }
-            var distributedCode = ApplicationProperties.properties["DistributedCode"].ToString();
-            if(distributedCode!=null)
-            {
-                Txt_DistributedCode.Text=distributedCode;
-                Txt_DistributedCode.Enabled=false;
+			}
+			var distributedCode = ApplicationProperties.properties["DistributedCode"].ToString();
+			if (distributedCode != null)
+			{
+				Txt_DistributedCode.Text = distributedCode;
+				Txt_DistributedCode.Enabled = false;
 
-            }
-            var IsEnableDistributor = ApplicationProperties.properties["IsEnableDistributor"].ToString();
-            if (IsEnableDistributor.Equals("false",StringComparison.OrdinalIgnoreCase))
+			}
+			var IsEnableDistributor = ApplicationProperties.properties["IsEnableDistributor"].ToString();
+			if (IsEnableDistributor.Equals("false", StringComparison.OrdinalIgnoreCase))
 
-            {
-                Txt_DistributedCode.Visible=false ;
-                label1.Visible=false ;  
-            }
-
-        }
-
-
-
-
-
-        
-
+			{
+				Txt_DistributedCode.Visible = false;
+				label1.Visible = false;
+			}
+		}
+                                          
         private void Chk_EnaleIgst_CheckedChanged(object sender, EventArgs e)
         {
             if (Chk_EnalbeIgst.Checked)
@@ -490,7 +497,7 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
 				//var myContent2 = JsonConvert.SerializeObject(SelectedIgstList);
 				//ApplicationProperties.properties["tallyGstListObjects"] = myContent;
 				//ApplicationProperties.properties["tallyIstListObjects"] = myContent2;
-				ApplicationProperties.updatePropertiesFile();
+				ApplicationProperties.updatePropertiesFile(StringUtilsCustom.TALLY_COMPANY);
 
                 //TallyProperties2 tallyProperties2 = new TallyProperties2();
                 //tallyProperties2.Show();

@@ -128,14 +128,7 @@ namespace SNR_ClientApp.Services
                 LogManager.WriteLog("uploading receivable-payable  To Server ....");
 
                 string requestUri = ApiConstants.PREFIX + ApiConstants.RECEIVALE_PAYABLES;//SNR_CLIENT_APP_RP_1
-
-				if (idClentApp.Equals("true"))
-                {
-                    requestUri = ApiConstants.PREFIX + ApiConstants.RECEIVALE_PAYABLES_ID;
-                }
-
-
-                LogManager.WriteLog("uploading  receivable-payable   started...\n" + "Api  : " + requestUri);
+                  LogManager.WriteLog("uploading  receivable-payable   started...\n" + "Api  : " + requestUri);
                 httpClient = RestClientUtil.getClient();
                 var myContent = JsonConvert.SerializeObject(list);
                 LogManager.WriteLog(myContent);

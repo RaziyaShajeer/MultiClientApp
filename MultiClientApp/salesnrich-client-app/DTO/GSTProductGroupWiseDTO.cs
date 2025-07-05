@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SNR_ClientApp.Properties;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,5 +17,6 @@ namespace SNR_ClientApp.DTO
         public String centralTax { get; set; }
         public String stateTax { get; set; }
         public String aditionalCess { get; set; }
-    }
+		
+	}
 }

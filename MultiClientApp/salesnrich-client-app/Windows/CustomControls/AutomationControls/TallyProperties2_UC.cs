@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using OfficeOpenXml;
 using SNR_ClientApp.Config;
 using SNR_ClientApp.DTO;
+using SNR_ClientApp.Enums;
 using SNR_ClientApp.Exceptions;
 using SNR_ClientApp.Properties;
 using SNR_ClientApp.Services;
@@ -31,7 +32,7 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
         TallyService tallyService;
         //Dictionary<string, Object> props = new Dictionary<string, Object>();
         HttpClient httpClient;
-        private Lazy<Dictionary<string, object>> lazyProps = new Lazy<Dictionary<string, object>>(() => ApplicationProperties.getAllProperties());
+        private Lazy<Dictionary<string, object>> lazyProps = new Lazy<Dictionary<string, object>>(() => ApplicationProperties.getAllProperties(StringUtilsCustom.TALLY_COMPANY));
 
         // Property to access the lazy-loaded dictionary
         public Dictionary<string, object> props => lazyProps.Value;
@@ -364,7 +365,44 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
             DiscountLedgerSelect.Items.Clear();
             DiscountLedgerSelect.Items.AddRange(IndirectExpencesList);
         }
+		
+		public void sendTallyCompanyName()
+        {
+			try
+			{
+                var tallyCompanyName = props["tally.company"].ToString();
+				//var myContent = JsonConvert.SerializeObject(tallyCompanyName);
+				HttpContent content = new StringContent(tallyCompanyName, Encoding.UTF8, "application/json");
+				string SaveTallyCompany = ApiConstants.SaveCompany + "?companyName=" + tallyCompanyName;
+				
 
+				httpClient = RestClientUtil.getClient();
+				var responseTask = httpClient.PostAsync(SaveTallyCompany, content);
+				responseTask.Wait();
+
+				HttpResponseMessage response = responseTask.Result;
+				LogManager.WriteResponseLog(response);
+
+
+				if (response.IsSuccessStatusCode)
+				{
+					LogManager.WriteLog("Posting TallyCompany  to Server Success..");
+					var response1 = response.Content.ReadAsStringAsync().Result;
+				}
+				else
+				{
+					LogManager.WriteLog("Posting TallyCompany  to Server Failed");
+					throw new ServiceException("Posting TallyCompany  to Server Failed");
+				}
+
+
+			}
+			catch (Exception ex)
+			{
+				LogManager.HandleException(ex);
+				throw ex;
+			}
+		}
         private void button2_Click(object sender, EventArgs e)
         {
             parentform.Cursor = Cursors.WaitCursor;
@@ -376,8 +414,9 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
 
                 
                 sendPropertiestoServer();
-                ApplicationProperties.updatePropertiesFile(StringUtilsCustom.TALLY_COMPANY);
-			var	resWriter = new ResXResourceWriter("ClientAppProps1.resx");
+                sendTallyCompanyName();
+				TallyConfigForm.isSettings = false;
+				//var	resWriter = new ResXResourceWriter("ClientAppProps1.resx");
 				var res = MessageBox.Show(
 								"Do you want to Add More Companies..?",
 								"SalesNrich",
@@ -387,9 +426,11 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
 							);
 				if (res == DialogResult.Yes)
 				{
+                    StringUtilsCustom.TALLY_COMPANY = null;
 					TallyConfigForm tallyConfigForm = new TallyConfigForm();
 					tallyConfigForm.Show();
 					this.Hide();
+					parentform.Hide();
 				}
 				else  
 				{
@@ -483,8 +524,12 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
         {
             try
             {
-                 ApplicationProperties.getAllProperties();
-                string ClientappPropertiestoServer = ApiConstants.CLIENTAPP_PROPERTIES_TO_SERVER;
+               
+      
+                var tallyCompanyName = props["tally.company"].ToString();
+            
+
+				string ClientappPropertiestoServer = ApiConstants.CLIENTAPP_PROPERTIES_TO_SERVER + "?tallyCompanyName=" + tallyCompanyName;
                 LogManager.WriteLog("updating  ClietappProperty Api:...."+ClientappPropertiestoServer);
                 LogManager.WriteLog(ClientappPropertiestoServer.ToString());
                 httpClient = RestClientUtil.getClient();
@@ -522,7 +567,9 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
             ApplicationProperties.properties["receipt.voucher.type.bank"] = BankReceiptVoucherTypeSelect.SelectedItem.ToString();
             ApplicationProperties.properties["receipt.voucher.type.cash"] = CashReceiptSelect.SelectedItem.ToString();
             ApplicationProperties.properties["isRoundOffEnabled"] = chk_RoundOff.Checked;
-            if (chk_RoundOff.Checked)
+            ApplicationProperties.properties["isFirstTimeCompanyLogin"] = "False";
+
+			if (chk_RoundOff.Checked)
             {
                 if (RoundOffLedgerSelect.SelectedItem != null)
                 {
@@ -568,7 +615,7 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
                 }
 
 
-                ApplicationProperties.updatePropertiesFile();
+                ApplicationProperties.updatePropertiesFile(StringUtilsCustom.TALLY_COMPANY);
             }
         
 

@@ -36,7 +36,7 @@ namespace SNR_ClientApp.Services
         private static bool downloadStatus = false;
         private static bool uploadStatus = false;
         UC_Logger uC_Logger;
-        private Lazy<Dictionary<string, object>> lazyProps = new Lazy<Dictionary<string, object>>(() => ApplicationProperties.getAllProperties());
+        private Lazy<Dictionary<string, object>> lazyProps = new Lazy<Dictionary<string, object>>(() => ApplicationProperties.getAllProperties(StringUtilsCustom.TALLY_COMPANY));
 
         // Property to access the lazy-loaded dictionary
         public Dictionary<string, object> props => lazyProps.Value;

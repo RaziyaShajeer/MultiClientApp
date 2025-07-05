@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SNR_ClientApp.Properties;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,6 +14,7 @@ namespace SNR_ClientApp.DTO
         public int itemQuantity { get; set; }
 
         public int stockQuantity { get; set; }
+		
 
     }
 }

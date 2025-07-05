@@ -16,6 +16,10 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using System.Text.Json;
+using SNR_ClientApp.Tally.generateXml;
+using SNR_ClientApp.TallyResponses;
+using SNR_ClientApp.Parsers;
+using System.Collections;
 
 namespace SNR_ClientApp.Services
 {
@@ -28,156 +32,58 @@ namespace SNR_ClientApp.Services
         private bool fullUpdate = true;
         private string idClentApp;
         private String tallyLedgerParent;
+        AccountProfileXmlParser AccountProfileXmlParser;
         public AccountProfileService()
         {
-            tallyCommunicator = new TallyCommunicator();
+			AccountProfileXmlParser=new AccountProfileXmlParser();
+
+			tallyCommunicator = new TallyCommunicator();
             httpClient = new HttpClient();
             idClentApp = ApplicationProperties.properties.GetValueOrDefault("idclientapp").ToString();
             tallyLedgerParent = ApplicationProperties.properties.GetValueOrDefault("tally.ledger.parent").ToString();
         }
         internal async void getFromTallyAndUpload(bool isOptimise)
+        
         {
-            try {
-                List<AccountProfileDTO> duplicatelist = new List<AccountProfileDTO>();
-                List<LocationDTO> _list = new List<LocationDTO>();
-            DataTable response = new DataTable();
-            StringBuilder Query = new StringBuilder();
-            Query.Append("select $_Address1,$_Address2,$PriceLevel,$Parent,$TaxType,$LedgerMobile,$LedStateName,$CountryofResidence,$Name," +
-                "$MailingName,$GSTRegistrationType,$PartyGSTIN,$PinCode,$Guid,$Alterid,$HaseDDCity from " + Tables.Ledger);
-            if (isOptimise)
+            try
             {
-                long alterID = getAlterId();
+                ENVELOPE tallyRequest = new ENVELOPE();
 
-                Query.Append(" where $Alterid >" + alterID);
-                fullUpdate = false;
-            }
-           
-      
-            response = await tallyCommunicator.getdatatable(Query.ToString());
-
-            if (response.Rows.Count > 0)
-            {
-                List<AccountProfileDTO> allAccountProfilespTally = new List<AccountProfileDTO>();
-
-                foreach (DataRow dr in response.Rows)
-                {
-                    AccountProfileDTO accountProfileDTO = new AccountProfileDTO();
-                    accountProfileDTO.customerId = ((string)dr["$guid"]);
-                    accountProfileDTO.name = (dr["$name"] != DBNull.Value) ? (string)dr["$name"] : "";
-
-                        //testing code 28/09/2023
-                        //  accountProfileDTO.name=accountProfileDTO.name.Trim();
-                       
-
-                        // Use Regex.Replace to remove the escape sequences at the end of the string
-                       
-                        if (accountProfileDTO.name.EndsWith("\r\n"))
-                        {
-                            accountProfileDTO.name = accountProfileDTO.name.Replace("\r\n", "");
-                            accountProfileDTO.trimChar = "#13;#10;";
-                        }
-
-                        // 13/10/2023
-                        // todo : need to verify with download order
-                        string pattern = @"[\r\n\t]+$";
-                        string result = Regex.Replace(accountProfileDTO.name, pattern, "");
-
-                        accountProfileDTO.name=result;
+                tallyRequest = AccountProfileXml.GenerateAccountProfileXml();
 
 
-                        accountProfileDTO.mailingName = (dr["$MailingName"] != DBNull.Value) ? (string)dr["$MailingName"] : "";
-                        if (accountProfileDTO.mailingName.EndsWith("\r\n"))
-                        {
-                            accountProfileDTO.mailingName = accountProfileDTO.mailingName.Replace("\r\n", "");
-                            //accountProfileDTO.trimChar = "#13;#10;";
-                        }
-                        //string[] endingChars = { "#13;", "#10;", "\t" }; // Add any other characters as needed
-                        //string name = accountProfileDTO.name;
-                        //string trimChar = "";
-                        //foreach (string endingChar in endingChars)
-                        //{
-                        //    if (name.EndsWith(endingChar))
-                        //    {
-                        //        trimChar = endingChar;
-                        //        name = name.Substring(0, name.Length - endingChar.Length);
-                        //        break; // Exit the loop once we find a matching ending character
-                        //    }
-                        //}
+                var stringwriter = new System.IO.StringWriter();
+                System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
+                x.Serialize(stringwriter, tallyRequest);
 
-                        //accountProfileDTO.name= accountProfileDTO.name.Replace("\r\n", "");
+                var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
 
 
-                        accountProfileDTO.description = (dr["$parent"] != DBNull.Value) ? (string)dr["$parent"] : "";
-
-                    accountProfileDTO.alterId = (dr["$alterid"] != DBNull.Value) ? (long.Parse(dr["$alterid"].ToString())) : 0;
-                    accountProfileDTO.address = (dr["$_Address1"] != DBNull.Value && (dr["$_Address1"]!="")) ? (string)dr["$_Address1"] : "No Address";
-                     accountProfileDTO.address += (dr["$_Address2"] != DBNull.Value  && (dr["$_Address2"]!="")) ?"~"+ (string)dr["$_Address2"] : "";
-                    accountProfileDTO.defaultPriceLevelName = (dr["$PriceLevel"] != DBNull.Value) ? (string)dr["$PriceLevel"] : "";
-                    accountProfileDTO.accountTypeName = (dr["$TaxType"] != DBNull.Value) ? (string)dr["$TaxType"] : "";
-
-                    accountProfileDTO.phone1 = (dr["$LedgerMobile"] != DBNull.Value) ? (string)dr["$LedgerMobile"] : "";
-                      var phone=  accountProfileDTO.phone1.Split(",");
-                        accountProfileDTO.phone1=phone[0];
-                    accountProfileDTO.stateName = (dr["$LedStateName"] != DBNull.Value) ? (string)dr["$LedStateName"] : "";
-                    accountProfileDTO.countryName = (dr["$CountryofResidence"] != DBNull.Value) ? (string)dr["$CountryofResidence"] : "";
-               
-                    accountProfileDTO.gstRegistrationType = (dr["$GSTRegistrationType"] != DBNull.Value) ? (string)dr["$GSTRegistrationType"] : "";
-                    accountProfileDTO.tinNo = (dr["$PartyGSTIN"] != DBNull.Value) ? (string)dr["$PartyGSTIN"] : "";
-                    accountProfileDTO.pin = (dr["$PinCode"] != DBNull.Value) ? (string)dr["$PinCode"] : "";
-                    accountProfileDTO.city = (dr["$HaseDDCity"] != DBNull.Value && dr["$HaseDDCity"]!="" ) ? (string)dr["$HaseDDCity"] : "No City";
-
-                        //todo : check this is working
-                        if (allAccountProfilespTally.Where(x => x.name==accountProfileDTO.name).Count() == 0)
-                        {
-                            allAccountProfilespTally.Add(accountProfileDTO);
-                        }
-                        else
-                        {
-                            duplicatelist.Add(accountProfileDTO);
-                        }
-                        //allAccountProfilespTally.Add(accountProfileDTO);
-
-                }
-
-                List<AccountProfileDTO> apTally = await getSundryDebtorsChilds(allAccountProfilespTally);
+                List<AccountProfileDTO> allAccountProfilespTally = await AccountProfileXmlParser.AccountProfilexmlParser(data);
+                LogManager.WriteLog("AccountProfile");
+                var myContent = JsonConvert.SerializeObject(allAccountProfilespTally);
+				LogManager.WriteLog(myContent.ToString());
+				List<AccountProfileDTO> apTally = await getSundryDebtorsChilds(allAccountProfilespTally);
                 List<AccountProfileDTO> apToServer = new List<AccountProfileDTO>();
-                //if (fileManagerService.fileExists(FILE_NAME))
-                //{
-                //    //					List<AccountProfileDTO> apFile = fileManagerService.readObjectFromFile(FILE_NAME,
-                    //							AccountProfileDTO.class);
-                    //					apToServer = findNewAndDeletedAccountProfiles(apTally, apFile);
-                    apToServer = apTally;
-                //}
-                //else
-                //{
-                //    fileManagerService.createApplicationDirectories();
-                //    apToServer = apTally;
-                //}
 
-               
-                if (apToServer.Count>0)
-                {
-                    upload(apToServer);
-						var myContent = JsonConvert.SerializeObject(apToServer);
-						LogManager.WriteLog(myContent.ToString());
 
-					}
-                    if (duplicatelist.Count>0)
-                    {
-                        LogManager.WriteLog("Duplicate AccountProfiles are : \n");
-                        duplicatelist.ForEach(x =>
-                        {
-                            LogManager.WriteLog("==>"+x.name+"\n");
-                        });
-                    }
-                    //fileManagerService.writeObjectToFile(apTally, FILE_NAME);
-                }
+                apToServer = apTally;
+				if (apToServer.Count > 0)
+				{
+					upload(apToServer);
+					 myContent = JsonConvert.SerializeObject(apToServer);
+					LogManager.WriteLog(myContent.ToString());
+
+
+				}
+
 			}
 			catch (Exception ex)
 			{
 				LogManager.HandleException(ex);
 				throw ex;
 			}
+			
 		}
 
         private void upload(List<AccountProfileDTO> list)
@@ -186,13 +92,8 @@ namespace SNR_ClientApp.Services
 
            
 
-            string requestUri = ApiConstants.PREFIX + ApiConstants.ACCOUNT_PROFILE; //SNR_CLIENT_APP_AP_1
-
-
-			if (idClentApp.Equals("true", StringComparison.OrdinalIgnoreCase))
-            {
-                requestUri = ApiConstants.PREFIX + ApiConstants.ACCOUNT_PROFILE_ID;//SNR_CLIENT_APP_AP_2
-			}
+            string  requestUri = ApiConstants.PREFIX + ApiConstants.ACCOUNT_PROFILE_ID;//SNR_CLIENT_APP_AP_2
+		
             LogManager.WriteLog("uploading ACCOUNT_PROFILE started...");
             httpClient = RestClientUtil.getClient();
             var myContent = JsonConvert.SerializeObject(list);
@@ -200,14 +101,15 @@ namespace SNR_ClientApp.Services
             LogManager.WriteLog("Request body : " + myContent);
             HttpContent inputContent = new StringContent(myContent, Encoding.UTF8, "application/json");
 
-            var responseTask = httpClient.PostAsync(requestUri  +"/"+ fullUpdate, inputContent);
+            var responseTask = httpClient.PostAsync(requestUri , inputContent);
 
             responseTask.Wait();
 
             HttpResponseMessage Res = responseTask.Result;
             LogManager.WriteResponseLog(Res);
 
-             if (Res.IsSuccessStatusCode)
+             
+            if (Res.IsSuccessStatusCode)
             {
                 LogManager.WriteLog("request for uploading ACCOUNT_PROFILE  Success..");
                 var response = Res.Content.ReadAsStringAsync().Result;
@@ -231,8 +133,10 @@ namespace SNR_ClientApp.Services
                 List<LocationDTO> allGroups = await getCompanyAccountGroups();
 
                 List<LocationDTO> filteredGroups = accountGroupsFilter(allGroups);
-               
-                List<AccountProfileDTO> sundryChild = new List<AccountProfileDTO>();
+                LogManager.WriteLog("fILTERED GROUPS");
+				var myContent = JsonConvert.SerializeObject(filteredGroups);
+				LogManager.WriteLog(myContent.ToString());
+				List<AccountProfileDTO> sundryChild = new List<AccountProfileDTO>();
 
                 String[] tallyLedgers = tallyLedgerParent.Split(",");
 
@@ -249,8 +153,9 @@ namespace SNR_ClientApp.Services
                         }
                     }
                 }
-
-                foreach (String tallyLedger in tallyLedgers)
+                int flag = 0;
+			
+				foreach (String tallyLedger in tallyLedgers)
                 {
                     foreach (AccountProfileDTO ledger in allLedgers)
                     {
@@ -259,16 +164,30 @@ namespace SNR_ClientApp.Services
                             //						System.out.println(ledger.getDescription()+"==="+tallyLedger);
                             if (accountGroup.name.Equals(ledger.description, StringComparison.OrdinalIgnoreCase))
                             {
+                        
                                 ledger.tallyLedgerType=tallyLedger;
                                 sundryChild.Add(ledger);
+                                flag = 1;
+                                break;
                                 //							System.out.println("123"+sundryChild.size());
                             }
-                        }
-                    }
-                }
+                         
+							
 
-               
-                filteredLedgers.AddRange(sundryChild);
+						}
+                        if(flag==0)
+
+                        {
+							LogManager.WriteLog("*****");
+							LogManager.WriteLog(ledger.description);
+                        }
+
+						
+					}
+                }
+			
+
+				filteredLedgers.AddRange(sundryChild);
                
             }
             catch (Exception e)
@@ -277,50 +196,35 @@ namespace SNR_ClientApp.Services
                 throw e;
             }
             return filteredLedgers;
-        }
-
-        private async Task<List<LocationDTO>> getCompanyAccountGroups()
-        {
-            try
-            {
-                List<LocationDTO> _list = new List<LocationDTO>();
-                DataTable response = new DataTable();
-                StringBuilder Query = new StringBuilder();
-                Query.Append("select $guid,$name,$alterid,$Parent from " + Tables.Groups);
-
-                response = await tallyCommunicator.getdatatable(Query.ToString());
-
-                if (response.Rows.Count > 0)
-                {
-
-
-                    foreach (DataRow dr in response.Rows)
-                    {
-                        LocationDTO locationDTO = new LocationDTO();
-                        locationDTO.locationId = ((string)dr["$guid"]);
-                        locationDTO.name = (dr["$name"] != DBNull.Value) ? (string)dr["$name"] : "";
-                        locationDTO.description = (dr["$parent"] != DBNull.Value) ? (string)dr["$parent"] : "";
-
-                        locationDTO.alterId = (dr["$alterid"] != DBNull.Value) ? (long.Parse(dr["$alterid"].ToString())) : 0;
-
-                        _list.Add(locationDTO);
-
-                    }
-
-                    // List<LocationDTO> filteredGroups = accountGroupsFilter(_list);
-                }
-                return _list;
-            }catch(Exception ex)
-            {
-                LogManager.HandleException(ex, "Exception occured while getCompanyAccountGroups in AccountProfileServices  ");
-                throw ex;
-            }
 
         }
+		private async Task<List<LocationDTO>> getCompanyAccountGroups()
+		{
+			ENVELOPE tallyRequest = new ENVELOPE();
+
+			tallyRequest = CompanygroupGenerateXml.getCompanyGroupsXml();
+
+
+			var stringwriter = new System.IO.StringWriter();
+			System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
+			x.Serialize(stringwriter, tallyRequest);
+
+			var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
+			List<LocationDTO> _list = new List<LocationDTO>();
+			_list = AccountGroupResponseParser.CompanyGroupresponseParser(data);
+
+			var myContent = JsonConvert.SerializeObject(_list);
+			LogManager.WriteLog(myContent.ToString());
+            return _list;
+		}
+		
 
         private List<LocationDTO> accountGroupsFilter(List<LocationDTO> allGroups)
         {
-            List<LocationDTO> sundryChild = new List<LocationDTO>();
+            LogManager.WriteLog("****aLLGROUPS");
+			var myContent = JsonConvert.SerializeObject(allGroups);
+			LogManager.WriteLog(myContent.ToString());
+			List<LocationDTO> sundryChild = new List<LocationDTO>();
             List<LocationDTO> filteredGroups = new List<LocationDTO>();
             String[] tallyLedgers = tallyLedgerParent.Split(",");
 
@@ -339,7 +243,11 @@ namespace SNR_ClientApp.Services
                 filteredGroups.Add(sg);
             }
             List<LocationDTO> filteredAllGroups = fileList(sundryChild, filteredGroups, allGroups);
-            return filteredAllGroups;
+			LogManager.WriteLog("Filtered Accounts");
+			myContent = JsonConvert.SerializeObject(filteredAllGroups);
+
+			LogManager.WriteLog(myContent.ToString());
+			return filteredAllGroups;
         }
 
         private List<LocationDTO> fileList(List<LocationDTO> sundryChild, List<LocationDTO> filteredGroups,

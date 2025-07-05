@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SNR_ClientApp.Properties;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -17,6 +18,8 @@ namespace SNR_ClientApp.DTO
         public String companyName { get; set; }
         public String companyPid { get; set; }
         public String vatClass { get; set; }
+		
+		
 
     }
 }

@@ -87,7 +87,7 @@ namespace SNR_ClientApp.Utils
                 }
                 WriteToFile(content, filePath);
             }
-        }
+                            }
 
         public static void WriteResponseLog(HttpResponseMessage Res)
         {
@@ -110,8 +110,16 @@ namespace SNR_ClientApp.Utils
         public static void LoadCompanyName() {
             try
             {
-                company= ApplicationProperties.properties.GetValueOrDefault("tally.company").ToString();
-            }catch(Exception ex) {
+                if (StringUtilsCustom.TALLY_COMPANY != null)
+                {
+                    ApplicationProperties.getAllProperties(StringUtilsCustom.TALLY_COMPANY);
+
+					company = ApplicationProperties.properties.GetValueOrDefault("tally.company").ToString();
+				}
+               
+
+			}
+			catch(Exception ex) {
 
                 company="Initial";   
             }

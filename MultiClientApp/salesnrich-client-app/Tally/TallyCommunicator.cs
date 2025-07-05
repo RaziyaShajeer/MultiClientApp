@@ -13,6 +13,9 @@ using SNR_ClientApp.TallyResponses;
 using System.Xml.Serialization;
 using System.Xml;
 using SNR_ClientApp.Enums;
+using SNR_ClientApp.Services;
+using SNR_ClientApp.DTO;
+using SNR_ClientApp.Windows.CustomControls;
 
 namespace SNR_ClientApp.Tally
 {
@@ -21,17 +24,24 @@ namespace SNR_ClientApp.Tally
         public OdbcCommand cmd;
         public OdbcConnection con;
         private Lazy<Dictionary<string, object>> lazyProps = new Lazy<Dictionary<string, object>>(() => ApplicationProperties.getAllProperties());
-
+        private Dictionary<string, object> companyProperties = new Dictionary<string, object>();
         // Property to access the lazy-loaded dictionary
         public Dictionary<string, object> props => lazyProps.Value;
-
+        CompanyService companyService;
+        UC_Logger uC_Logger;
         public TallyCommunicator()
-        
+
+
         {
-            
+
+            if (StringUtilsCustom.TALLY_COMPANY != null)
+            {
+                companyProperties = ApplicationProperties.getAllProperties(StringUtilsCustom.TALLY_COMPANY);
+            }
 
         }
-        public OdbcConnection GetConnection()
+        public async Task<OdbcConnection> GetConnection()
+
         {
             string source = "";
             try
@@ -43,7 +53,7 @@ namespace SNR_ClientApp.Tally
                 //source = "Driver={Tally ODBC Driver};Server="+props.GetValueOrDefault("tally.hostname")+";Port="+ props.GetValueOrDefault("tally.port")+";DSN=TallyODBC64_9000;";
                 string odbcDsn = ApplicationProperties.properties["tally.odbcdsn"].ToString();
                 //source = "SERVER="+ props.GetValueOrDefault("tally.hostname") +";DSN=TallyODBC64_"+ props.GetValueOrDefault("tally.port")+";PORT=" + props.GetValueOrDefault("tally.port") + ";DRIVER=Tally ODBC Driver64;" ;
-                source = "SERVER="+ props.GetValueOrDefault("tally.hostname") +";DSN="+odbcDsn+";PORT=" + props.GetValueOrDefault("tally.port") + ";DRIVER=Tally ODBC Driver64;";
+                source = "SERVER=" + props.GetValueOrDefault("tally.hostname") + ";DSN=" + odbcDsn + ";PORT=" + props.GetValueOrDefault("tally.port") + ";DRIVER=Tally ODBC Driver64;";
 
                 LogManager.WriteLog("\nConnection String : " + source);
                 //con.Dispose();
@@ -59,15 +69,72 @@ namespace SNR_ClientApp.Tally
                 }
                 con.Open();
                 return con;
-            }catch(Exception e)
+            }
+            catch (Exception e)
             {
                 LogManager.WriteLog("Exception occured while getting Connection to Tally");
                 LogManager.HandleException(e, "Connection String : " + source);
                 throw e;
             }
+
+
+        }
+        internal async Task<List<CompanyDTO>> GetCompanies()
+        {
+            LogManager.WriteLog("listing company started...");
+            DataTable table = await getdatatableofTAlly("SELECT $Name,$Guid,$STATENAME FROM " + Tables.Company);
+
+            //object[] row = { table.Rows[0]["$Name"].ToString() };
+            LogManager.WriteLog("listing company ended...");
+
+            List<CompanyDTO> _list = new List<CompanyDTO>();
+            foreach (DataRow dr in table.Rows)
+            {
+                _list.Add(new CompanyDTO
+                {
+                    guid = ((string)dr["$Guid"]),
+                    companyName = dr["$Name"].ToString(),
+                    stateName = dr["$STATENAME"].ToString()
+                });
+            }
+            return _list;
+
         }
 
-        public bool TryConnectTally()
+       
+    
+
+		
+
+		private void appendLogMessage(string v)
+
+		{
+			uC_Logger.AppendLogMsg(v);
+		}
+	
+		
+		private bool checkCompanyExist(List<CompanyDTO> companies)
+		{
+			//test code : assuming that first comapny in the list willbe the active company
+			//var selectedCompany= companies.First();
+			//if (selectedCompany.companyName.Equals(StringUtilsCustom.TALLY_COMPANY))
+			//{
+			//    return true;
+			//}
+			//else
+			//{
+			//    return false;
+			//}
+			foreach (CompanyDTO dto in companies)
+			{
+				if (dto.companyName.Equals(StringUtilsCustom.TALLY_COMPANY))
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+		public bool TryConnectTally()
         {
             try {
                 HttpClient client = new HttpClient();
@@ -93,12 +160,46 @@ namespace SNR_ClientApp.Tally
                 return false;
             }
         }
+		public async Task<DataTable> getdatatableofTAlly(string query)
+		{
+			try
+			{
+				string hostname = ApplicationProperties.properties.GetValueOrDefault("tally.hostname").ToString();
+				if (!hostname.Equals("localhost", StringComparison.OrdinalIgnoreCase))
+				{
+					var res = getdatatableFromXmlAsync(query);
+					res.Wait();
+					return res.Result;
+				}
+				else
+				{
+					LogManager.WriteLog("Get request to Tally - \n Query : " + query);
+					var con = await GetConnection();
+					if (con.State == ConnectionState.Closed)
+						con.Open();
+					OdbcDataAdapter ad = new OdbcDataAdapter(query, con);
+					DataTable dt = new DataTable();
+					ad.Fill(dt);
+					LogManager.WriteLog("Tally get request Successfully executed");
+					return dt;
+				}
 
-        public async Task<DataTable> getdatatable(string query)
+			}
+			catch (Exception ex)
+			{
+
+				LogManager.WriteLog("UnExpected error occured while getting datas from Tally\n" + ex.Message + "\n" + ex.InnerException);
+				LogManager.HandleException(ex);
+				throw ex;
+			}
+		}
+
+
+		public async Task<DataTable> getdatatable(string query)
         {
             try
             {
-                string hostname = props.GetValueOrDefault("tally.hostname").ToString();
+                string hostname = ApplicationProperties.properties.GetValueOrDefault("tally.hostname").ToString();
                 if (!hostname.Equals("localhost", StringComparison.OrdinalIgnoreCase))
                 {
                      var res = getdatatableFromXmlAsync(query);
@@ -108,7 +209,7 @@ namespace SNR_ClientApp.Tally
                 else
                 {
                     LogManager.WriteLog("Get request to Tally - \n Query : " + query);
-                    var con = GetConnection();
+                     var con =await GetConnection();
                     if (con.State== ConnectionState.Closed)
                         con.Open();
                     OdbcDataAdapter ad = new OdbcDataAdapter(query, con);
@@ -128,17 +229,33 @@ namespace SNR_ClientApp.Tally
             }
         }
 
-        public object execscalar(string query)
+        public async Task<object> execscalar(string query)
         {
 
-            OdbcCommand cmd = new OdbcCommand(query, GetConnection());
+            OdbcCommand cmd = new OdbcCommand(query,await GetConnection());
             object s;
             s = cmd.ExecuteScalar();
             return s;
         }
         public string GetXmlQueryForSqlCmd(string query)
-        {
-            string companyName = props.GetValueOrDefault("tally.company").ToString();
+		{
+            if(StringUtilsCustom.TALLY_COMPANY!=null)
+            {
+				ApplicationProperties.getAllProperties(StringUtilsCustom.TALLY_COMPANY);
+			}
+          
+            
+            string companyName;
+
+			try
+            {
+             companyName = ApplicationProperties.properties.GetValueOrDefault("tally.company").ToString();
+            }
+            catch (Exception ex)
+            {
+				companyName = null;
+            }
+           
 
             ENVELOPE tallyRequest = new ENVELOPE();
             HEADER header = new HEADER();
@@ -192,10 +309,10 @@ namespace SNR_ClientApp.Tally
             return dataTable;
 
         }
-        public int execNonQuery(string query)
+        public async Task<int> execNonQuery(string query)
         {
 
-            OdbcCommand cmd = new OdbcCommand(query, GetConnection());
+            OdbcCommand cmd = new OdbcCommand(query,await GetConnection());
             return cmd.ExecuteNonQuery();
         }
 
@@ -204,8 +321,26 @@ namespace SNR_ClientApp.Tally
             LogManager.WriteLog("Get request to Tally - \n XML : " + xmlQuery);
             TallyRequestResponse Tallyresponse = new TallyRequestResponse();
             HttpClient client = new HttpClient();
-            client.BaseAddress = new Uri(props.GetValueOrDefault("tally.full.url").ToString());
-            string companyname = props.GetValueOrDefault("tally.company").ToString();
+            try
+            {
+                client.BaseAddress = new Uri(ApplicationProperties.properties.GetValueOrDefault("tally.full.url").ToString());
+            }
+            catch (Exception e)
+            {
+                client.BaseAddress = new Uri(ApplicationProperties.userinitialproperty.GetValueOrDefault("tally.full.url").ToString());
+			}
+         
+            string companyname;
+
+			try
+            {
+                companyname = ApplicationProperties.properties.GetValueOrDefault("tally.company").ToString();
+			}
+            catch(Exception ex)
+            {
+                companyname = null;
+            }
+           
 
 
             HttpContent inputContent = new StringContent(xmlQuery, Encoding.UTF8, "text/xml");

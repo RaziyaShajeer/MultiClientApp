@@ -68,7 +68,7 @@ namespace SNR_ClientApp.Windows
 			panel1.Name = "panel1";
 			panel1.Size = new Size(488, 343);
 			panel1.TabIndex = 0;
-			
+			panel1.Paint += panel1_Paint;
 			// 
 			// close_btn
 			// 
@@ -239,7 +239,7 @@ namespace SNR_ClientApp.Windows
 			ResumeLayout(false);
 		}
 
-	
+
 
 		#endregion
 

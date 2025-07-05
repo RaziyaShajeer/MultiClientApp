@@ -7,6 +7,8 @@ using SNR_ClientApp.Exceptions;
 using SNR_ClientApp.Parsers;
 using SNR_ClientApp.Properties;
 using SNR_ClientApp.Tally;
+using SNR_ClientApp.Tally.generateXml;
+
 //using SNR_ClientApp.TallyRequests;
 using SNR_ClientApp.TallyResponses;
 using SNR_ClientApp.Utils;
@@ -25,7 +27,8 @@ namespace SNR_ClientApp.Services
         HttpClient httpClient;
         OpeningStockTallyMasterResponseParser openingStockTallyMasterResponseParser;
         private string idClentApp;
-        TallyService tallyService ;
+        StockitemParser stockitemParser;
+		TallyService tallyService ;
         string netstockAvil = ApplicationProperties.properties["netStockAvilable"].ToString();
         public OpeningStockService()
         {
@@ -34,6 +37,7 @@ namespace SNR_ClientApp.Services
             openingStockTallyMasterResponseParser = new OpeningStockTallyMasterResponseParser();
             idClentApp = ApplicationProperties.properties.GetValueOrDefault("idclientapp").ToString();
             tallyService = new TallyService();
+            stockitemParser = new StockitemParser();
         }
         public async Task<bool> getFromTallyAndUploadAsync()
         {
@@ -72,8 +76,14 @@ namespace SNR_ClientApp.Services
                 List<OpeningStockDTO> opstkToServer = new List<OpeningStockDTO>();
                 List<OpeningStockDTO> opstkToServerTo = new List<OpeningStockDTO>();
                 List<ProductProfileDTO> stockItems=new List<ProductProfileDTO>();
-              
-                stockItems =await tallyService.getAllStockItems();
+				tallyRequest = StockItemXml.getCompanystockitemXml();
+				var stringwriter1 = new System.IO.StringWriter();
+				System.Xml.Serialization.XmlSerializer x1 = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
+				x.Serialize(stringwriter1, tallyRequest);
+
+				var data1 = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter1.ToString());
+                stockItems = stockitemParser.ParseStockItemListXml(data1);
+			
                 if (key==null || key=="")
                 {
                     OpeningStockTallyMasterResponseParser openingStockTallyMasterResponseParser = new OpeningStockTallyMasterResponseParser();
@@ -143,7 +153,8 @@ namespace SNR_ClientApp.Services
                         if (opstkToServer.Count>0)
                         {
                             LogManager.WriteLog(opstkToServer.ToString());  
-                             res= upload(opstkToServer);
+                             
+                            res= upload(opstkToServer);
                             return res;
                         }
                     }
@@ -171,12 +182,10 @@ namespace SNR_ClientApp.Services
             {
                 LogManager.WriteLog("uploading Opening Stock  To Server ....");
 
-                string requestUri = ApiConstants.PREFIX + ApiConstants.OPENING_STOCK;
+                
 
-                if (idClentApp.Equals("true", StringComparison.OrdinalIgnoreCase))
-                {
-                    requestUri = ApiConstants.PREFIX + ApiConstants.OPENING_STOCK_ID;
-                }
+				string requestUri = ApiConstants.PREFIX + ApiConstants.OPENING_STOCK_MULTI;
+         
 
 
                 LogManager.WriteLog("uploading Opening Stock  started...\n" + "Api  : " + requestUri);
@@ -260,8 +269,133 @@ namespace SNR_ClientApp.Services
             }
 
         }
+		public ENVELOPE  getCompanyAccountGroupsXml()
+        {
+			ENVELOPE tallyRequest = new ENVELOPE();
+			HEADER header = new HEADER();
+			header.VERSION = "1";
+			header.TALLYREQUEST = "Export";
+			header.TYPE = "Data";
+			header.ID = "List of Groups";
+			tallyRequest.HEADER = header;
+			BODY body = new();
+			DESC desc = new();
+			STATICVARIABLES staticvariables = new STATICVARIABLES();
+			staticvariables.EXPLODEFLAG = "Yes";
+			staticvariables.SVCURRENTCOMPANY = ApplicationProperties.properties["tally.company"].ToString();
+			staticvariables.SVEXPORTFORMAT = "$$SysName:XML";
+			staticvariables.IsItemWise = "Yes";
+			desc.STATICVARIABLES = staticvariables;
+			TDL tdl = new TDL();
+			TDLMESSAGE tdlmessage = new TDLMESSAGE();
+			REPORT report = new REPORT();
+			report.NAME = "List of Groups";
+			report.ISMODIFY = "No";
+			report.ISFIXED = "No";
+			report.ISINITIALIZE = "No";
+			report.ISOPTION = "No";
+			report.ISINTERNAL = "No";
+			report.FORMS = "List of Groups";
+			tdlmessage.REPORT = report;
+			FORM form = new FORM();
+			form.NAME = "List of Groups";
+			form.ISMODIFY = "No";
+			form.ISFIXED = "No";
+			form.ISINITIALIZE = "No";
+			form.ISOPTION = "No";
+			form.ISINTERNAL = "No";
+			form.TOPPARTS = "List of Groups";
+			form.XMLTAG = "List of Groups";
+			tdlmessage.FORM = form;
+			PART part = new PART();
+			part.NAME = "List of Groups";
+			part.ISMODIFY = "No";
+			part.ISFIXED = "No";
+			part.ISINITIALIZE = "No";
+			part.ISOPTION = "No";
+			part.ISINTERNAL = "No";
+			part.TOPLINES = "Line Groups";
+			part.REPEAT = "Line Groups : Collection of Groups";
+			part.SCROLLED = "Vertical";
+			part.VERTICAL = "Yes";
+			List<PART> parts = new List<PART>();
+			parts.Add(part);
+			tdlmessage.PART = parts;
 
-        public ENVELOPE getCompanyNettStockAvilBatchWiseXml()
+
+			LINE line = new LINE();
+			line.NAME = "Line Groups";
+			line.ISMODIFY = "No";
+			line.ISFIXED = "No";
+			line.ISINITIALIZE = "No";
+			line.ISOPTION = "No";
+			line.ISINTERNAL = "No";
+			line.XMLtag = "Groups";
+			List<LINE> lines = new List<LINE>();
+			lines.Add(line);
+			tdlmessage.LINE = lines;
+			List<FIELD> fieldList = new List<FIELD>();
+			FIELD field = new FIELD();
+			field.NAME = "Field Name Groups";
+			field.ISMODIFY = "No";
+			field.ISFIXED = "No";
+			field.ISINITIALIZE = "No";
+			field.ISOPTION = "No";
+			field.ISINTERNAL = "No";
+			field.SET = "$Name";
+			field.XMLTAG = "NAME";
+			fieldList.Add(field);
+			FIELD field2 = new FIELD();
+			field2.NAME = "Field Parent Groups";
+			field2.ISMODIFY = "No";
+			field2.ISFIXED = "No";
+			field2.ISINITIALIZE = "No";
+			field2.ISOPTION = "No";
+			field2.ISINTERNAL = "No";
+			field2.SET = "$Parent";
+			field2.XMLTAG = "PARENT";
+			fieldList.Add(field2);
+			FIELD field3 = new FIELD();
+			field3.NAME = "Field Guid Groups";
+			field3.ISMODIFY = "No";
+			field3.ISFIXED = "No";
+			field3.ISINITIALIZE = "No";
+			field3.ISOPTION = "No";
+			field3.ISINTERNAL = "No";
+			field3.SET = "$Guid";
+			field3.XMLTAG = "GUID";
+			fieldList.Add(field3);
+			tdlmessage.FIELD = fieldList;
+			List<COLLECTION> collectionsList = new List<COLLECTION>();
+			COLLECTION collection = new COLLECTION();
+
+			collection.NAME = "Collection of Groups";
+			collection.ISMODIFY = "No";
+			collection.ISFIXED = "No";
+			collection.ISINITIALIZE = "No";
+			collection.ISOPTION = "No";
+			collection.ISINTERNAL = "No";
+			List<String> types = new List<String>();
+			types.Add("Groups");
+			collection.TYPE = types;
+
+			List<String> NativeMethod = new List<string>();
+			NativeMethod.Add("Parent");
+			NativeMethod.Add("Name");
+			NativeMethod.Add("Guid");
+			collection.NativeMethod = NativeMethod;
+			collectionsList.Add(collection);
+
+			tdlmessage.COLLECTION = collectionsList;
+			tdl.TDLMESSAGE = tdlmessage;
+			desc.TDL = tdl;
+			body.DESC = desc;
+			tallyRequest.BODY = body;
+			return tallyRequest;
+		}
+
+
+		public ENVELOPE getCompanyNettStockAvilBatchWiseXml()
         {
 
             ENVELOPE tallyRequest = new ENVELOPE();

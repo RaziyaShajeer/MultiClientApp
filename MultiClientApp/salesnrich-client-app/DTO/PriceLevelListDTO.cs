@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SNR_ClientApp.Properties;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -24,8 +25,8 @@ namespace SNR_ClientApp.DTO
         //todo check with server 
         //added for getting discount
         public double discount { get; set; }
-
-        public PriceLevelListDTO()
+		public string tallyCompanyName { get; set; }
+		public PriceLevelListDTO()
         {
 
         }
@@ -39,6 +40,7 @@ namespace SNR_ClientApp.DTO
             this.date = date;
             this.rangeFrom = rangeFrom;
             this.rangeTo = rangeTo;
-        }
+			tallyCompanyName = ApplicationProperties.properties["tally.company"].ToString();
+		}
     }
 }

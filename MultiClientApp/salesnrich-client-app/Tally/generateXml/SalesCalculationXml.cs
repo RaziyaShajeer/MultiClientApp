@@ -91,7 +91,7 @@ namespace SNR_ClientApp.Tally.generateXml
 
             }
             //aLLINVENTORYENTRIESLIST.STOCKITEMNAME = itemName;
-            aLLINVENTORYENTRIESLIST.STOCKITEMNAME = salesOrder.itemName+trimChar;
+            aLLINVENTORYENTRIESLIST.STOCKITEMNAME = salesOrder.productName+trimChar;
             aLLINVENTORYENTRIESLIST.SUBCATEGORY = "+ VAT";
             aLLINVENTORYENTRIESLIST.ISDEEMEDPOSITIVE = "No";
             aLLINVENTORYENTRIESLIST.ISLASTDEEMEDPOSITIVE = "No";

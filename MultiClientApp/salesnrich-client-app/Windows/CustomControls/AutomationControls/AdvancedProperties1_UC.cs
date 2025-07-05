@@ -185,7 +185,7 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
             ApplicationProperties.properties["download.disable.chequeue.entry"]=Chk_receipt.Checked;
           
                 ApplicationProperties.properties["company.state"] =company_State.Text;
-            ApplicationProperties.updatePropertiesFile();
+            ApplicationProperties.updatePropertiesFile(StringUtilsCustom.TALLY_COMPANY);
 
         }
 

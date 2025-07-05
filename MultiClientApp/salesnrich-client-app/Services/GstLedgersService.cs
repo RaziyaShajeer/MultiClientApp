@@ -2,7 +2,10 @@
 using SNR_ClientApp.Config;
 using SNR_ClientApp.DTO;
 using SNR_ClientApp.Enums;
+using SNR_ClientApp.Parsers;
 using SNR_ClientApp.Tally;
+using SNR_ClientApp.Tally.generateXml;
+using SNR_ClientApp.TallyResponses;
 using SNR_ClientApp.Utils;
 using System;
 using System.Collections.Generic;
@@ -42,7 +45,17 @@ namespace SNR_ClientApp.Services
 
         public async Task< List<GstLedgerDTO>>  getAllGstLedgers(String parent)
         {
-            List<GstLedgerDTO> allGstLedgerspTally = new List<GstLedgerDTO>();
+
+			ENVELOPE tallyRequest = new ENVELOPE();
+			tallyRequest= GSTLedgerGenerateXML.GstLedgerGenerateXml(parent);
+			var stringwriter = new System.IO.StringWriter();
+			System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
+			x.Serialize(stringwriter, tallyRequest);
+
+			var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
+			List<LocationDTO> _list = new List<LocationDTO>();
+			_list = AccountGroupResponseParser.CompanyGroupresponseParser(data);
+			List<GstLedgerDTO> allGstLedgerspTally = new List<GstLedgerDTO>();
             DataTable response = new DataTable();
             StringBuilder Query = new StringBuilder();
 			Query.Append("SELECT $name, $parent, $TAXTYPE, $SUBTAXTYPE, $RATEOFTAXCALCULATION, $Guid, $GSTDUTYHEAD FROM "

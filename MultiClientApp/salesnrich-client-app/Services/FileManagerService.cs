@@ -15,7 +15,9 @@ namespace SNR_ClientApp.Services
     private String snrichPath;
         public FileManagerService()
         {
-            snrichPath = ApplicationProperties.properties.GetValueOrDefault("snrich.dir").ToString();
+            
+            
+           snrichPath = ApplicationProperties.userinitialproperty.GetValueOrDefault("snrich.dir").ToString();
         }
         internal void deleteFile(string fileName)
         {

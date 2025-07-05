@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SNR_ClientApp.Properties;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -58,5 +59,10 @@ namespace SNR_ClientApp.DTO
 
         public String mailingName{ get; set; }
         public string createdDate { get; set; }
+		public string tallyCompanyName { get; set; }
+		public AccountProfileDTO()
+        {
+			tallyCompanyName = ApplicationProperties.properties["tally.company"].ToString();
+		}
 	}
 }

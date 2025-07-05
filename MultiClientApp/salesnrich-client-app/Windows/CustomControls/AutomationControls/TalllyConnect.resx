@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!--
-    Microsoft ResX Schema 
+    Microsoft ResX Schema
 
     Version 2.0
 
@@ -48,7 +48,7 @@
     value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
             : and then encoded with base64 encoding.
-    
+
     mimetype: application/x-microsoft.net.object.soap.base64
     value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
@@ -121,7 +121,7 @@
   <data name="infoHostName.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAYAAAD0eNT6AAAABGdBTUEAALGPC/xhBQAAAAlwSFlzADKJ
-        cAAyiXABoNiJlwAAO71JREFUeF7t3Qm4HFWd9/Hc3CwQkgCBILITBEFkGRBwGUTZXEeUER0d1HFGUV5E
+        bwAyiW8BnwI3RwAAO71JREFUeF7t3Qm4HFWd9/Hc3CwQkgCBILITBEFkGRBwGUTZXEeUER0d1HFGUV5E
         Rdlyu6o64DKOCq8i76vj9joziiOC4oKKjEYUTbhdp5OAYQuL7GHfAiT31ul+f+fmRDp1K7n77a6q7+95
         Pk9fkpCcOnXOqX931zKFEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGE
         EEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEDLl7Oub0869vjm9Um/OrNaaW8nsKO7bNjR920Zx
@@ -907,7 +907,7 @@
   <data name="pictureBox2.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAYAAAD0eNT6AAAABGdBTUEAALGPC/xhBQAAAAlwSFlzADKJ
-        cAAyiXABoNiJlwAAO71JREFUeF7t3Qm4HFWd9/Hc3CwQkgCBILITBEFkGRBwGUTZXEeUER0d1HFGUV5E
+        bwAyiW8BnwI3RwAAO71JREFUeF7t3Qm4HFWd9/Hc3CwQkgCBILITBEFkGRBwGUTZXEeUER0d1HFGUV5E
         Rdlyu6o64DKOCq8i76vj9joziiOC4oKKjEYUTbhdp5OAYQuL7GHfAiT31ul+f+fmRDp1K7n77a6q7+95
         Pk9fkpCcOnXOqX931zKFEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGE
         EEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEDLl7Oub0869vjm9Um/OrNaaW8nsKO7bNjR920Zx

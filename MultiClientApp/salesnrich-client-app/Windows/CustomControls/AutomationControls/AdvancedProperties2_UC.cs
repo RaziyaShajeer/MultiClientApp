@@ -44,78 +44,74 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
             }
         }
 
-        private void bindDatasFromProperties()
+		private void bindDatasFromProperties()
+		{
+			var optionalReceipt = ApplicationProperties.properties["is.optional.receipt"];
+			var optionalSalesOrder = ApplicationProperties.properties["is.optional.salesOrder"];
+			var cashOnlyLedger = ApplicationProperties.properties["enable.cash.only.ledger.entry"];
+			var paymentModeTerms = ApplicationProperties.properties["payment.mode.terms"];
+			var receiptEmplpoyee = ApplicationProperties.properties["enable.receipt.employeewise.ledger"];
+			var state = ApplicationProperties.properties["company.state"].ToString();
+			var orderEmployee = ApplicationProperties.properties["order.employee.name"];
+			var batchName = ApplicationProperties.properties["batchName"];
+			var isCashonlyEnabled = ApplicationProperties.properties["isCashonlyLedgerEnabled"];
+			var costCenter = ApplicationProperties.properties["enable.cost.centre"];
+			var costCenterCashReceipts = ApplicationProperties.properties["enable.cost.centre.cash.receipts"];
+			var receiptVoucherType = ApplicationProperties.properties["enable.receipt.voucherType"];
+			var provisionalNo = ApplicationProperties.properties["show.provisional.no"];
+			var PaymentModeRemarks = ApplicationProperties.properties["PaymentModeRemarks"].ToString();
+			chk_CostCenterCashReceipts.Checked = costCenterCashReceipts.ToString().ToLower().Equals("true");
+			chk_ReceiptVoucherType.Checked = receiptVoucherType.ToString().ToLower().Equals("true");
+
+			chk_OptionalReceipt.Checked = optionalReceipt.ToString().ToLower().Equals("true");
+
+			chk_CostCenter.Checked = costCenter.ToString().ToLower().Equals("true");
+
+
+			chk_EmployeewiseReceipt.Checked = receiptEmplpoyee.ToString().ToLower().Equals("true");
+
+			chk_OrderEmployeeName.Checked = orderEmployee.ToString().ToLower().Equals("true");
+			chk_ProvisionalReceipt.Checked = provisionalNo.ToString().ToLower().Equals("true");
+			txt_PaymentModeTerms.Text = paymentModeTerms.ToString();
+
+			chk_CashOnly.Checked = isCashonlyEnabled.ToString().ToLower().Equals("true");
+			if (PaymentModeRemarks.Equals("True", StringComparison.OrdinalIgnoreCase))
+			{
+				chk_paymentMode.Checked = true;
+			}
+			var enableEmpVoucher = ApplicationProperties.properties["isDownloadByEmployeesEnabled"].ToString();
+			if (enableEmpVoucher.Equals("True", StringComparison.OrdinalIgnoreCase))
+			{
+				chk_DownloadByEmployeeVoucher.Checked = true;
+				txtEmployees.Text = ApplicationProperties.properties["download.by.employees"].ToString();
+			}
+		}
+		private void printDatasToProperties()
         {
-            try
-            {
+			ApplicationProperties.properties["payment.mode.terms"] = txt_PaymentModeTerms.Text;
+			ApplicationProperties.properties["enable.cash.only.ledger.entry"] = chk_CashOnly.Checked ? txt_CashOnlyLedgerName.Text : "";
 
+			ApplicationProperties.properties["is.optional.receipt"] = chk_OptionalReceipt.Checked.ToString();
 
-                var optionalReceipt = ApplicationProperties.properties["is.optional.receipt"];
-                var optionalSalesOrder = ApplicationProperties.properties["is.optional.salesOrder"];
-                var cashOnlyLedger = ApplicationProperties.properties["enable.cash.only.ledger.entry"];
-                var paymentModeTerms = ApplicationProperties.properties["payment.mode.terms"];
-                var receiptEmplpoyee = ApplicationProperties.properties["enable.receipt.employeewise.ledger"];
-                var state = ApplicationProperties.properties["company.state"].ToString();
-                var orderEmployee = ApplicationProperties.properties["order.employee.name"];
-                var batchName = ApplicationProperties.properties["batchName"];
-                var isCashonlyEnabled = ApplicationProperties.properties["isCashonlyLedgerEnabled"];
-                var costCenter = ApplicationProperties.properties["enable.cost.centre"];
-                var costCenterCashReceipts = ApplicationProperties.properties["enable.cost.centre.cash.receipts"];
-                var receiptVoucherType = ApplicationProperties.properties["enable.receipt.voucherType"];
-                var provisionalNo = ApplicationProperties.properties["show.provisional.no"];
-                var PaymentModeRemarks = ApplicationProperties.properties["PaymentModeRemarks"].ToString();
-                chk_CostCenterCashReceipts.Checked = costCenterCashReceipts.ToString().ToLower().Equals("true");
-                chk_ReceiptVoucherType.Checked = receiptVoucherType.ToString().ToLower().Equals("true");
+			ApplicationProperties.properties["enable.cost.centre"] = chk_CostCenter.Checked;
+			ApplicationProperties.properties["enable.cost.centre.cash.receipts"] = chk_CostCenterCashReceipts.Checked;
 
-                chk_OptionalReceipt.Checked = optionalReceipt.ToString().ToLower().Equals("true");
+			ApplicationProperties.properties["isCashonlyLedgerEnabled"] = chk_CashOnly.Checked;
 
-                chk_CostCenter.Checked = costCenter.ToString().ToLower().Equals("true");
+			ApplicationProperties.properties["enable.receipt.employeewise.ledger"] = chk_EmployeewiseReceipt.Checked;
 
+			ApplicationProperties.properties["order.employee.name"] = chk_OrderEmployeeName.Checked;
 
-                chk_EmployeewiseReceipt.Checked = receiptEmplpoyee.ToString().ToLower().Equals("true");
+			ApplicationProperties.properties["show.provisional.no"] = chk_ProvisionalReceipt.Checked.ToString();
+			ApplicationProperties.properties["enable.receipt.voucherType"] = chk_ReceiptVoucherType.Checked;
 
-                chk_OrderEmployeeName.Checked = orderEmployee.ToString().ToLower().Equals("true");
-                chk_ProvisionalReceipt.Checked = provisionalNo.ToString().ToLower().Equals("true");
-                txt_PaymentModeTerms.Text = paymentModeTerms.ToString();
+			ApplicationProperties.properties["isDownloadByEmployeesEnabled"] = chk_DownloadByEmployeeVoucher.Checked.ToString();
+			ApplicationProperties.properties["download.by.employees"] = (chk_DownloadByEmployeeVoucher.Checked) ? txtEmployees.Text : "";
 
-                chk_CashOnly.Checked = isCashonlyEnabled.ToString().ToLower().Equals("true");
-                if (PaymentModeRemarks.Equals("True", StringComparison.OrdinalIgnoreCase))
-                {
-                    chk_paymentMode.Checked = true;
-                }
-            }
-            catch (Exception ex)
-            {
-                LogManager.WriteLog("Exception occured while Binding datas from properties file in Tally Advanced Properties .");
-                LogManager.HandleException(ex);
-            }
-        }
+			ApplicationProperties.properties["download.by.employee.voucher"] = chk_DownloadByEmployeeVoucher.Checked.ToString();
+			ApplicationProperties.properties["PaymentModeRemarks"] = chk_paymentMode.Checked.ToString();
 
-        private void printDatasToProperties()
-        {
-            ApplicationProperties.properties["payment.mode.terms"] = txt_PaymentModeTerms.Text;
-            ApplicationProperties.properties["enable.cash.only.ledger.entry"] = chk_CashOnly.Checked ? txt_CashOnlyLedgerName.Text : "";
-
-            ApplicationProperties.properties["is.optional.receipt"] = chk_OptionalReceipt.Checked.ToString();
-
-            ApplicationProperties.properties["enable.cost.centre"] = chk_CostCenter.Checked;
-            ApplicationProperties.properties["enable.cost.centre.cash.receipts"] = chk_CostCenterCashReceipts.Checked;
-
-            ApplicationProperties.properties["isCashonlyLedgerEnabled"] = chk_CashOnly.Checked;
-
-            ApplicationProperties.properties["enable.receipt.employeewise.ledger"] = chk_EmployeewiseReceipt.Checked;
-
-            ApplicationProperties.properties["order.employee.name"] = chk_OrderEmployeeName.Checked;
-
-            ApplicationProperties.properties["show.provisional.no"] = chk_ProvisionalReceipt.Checked.ToString();
-            ApplicationProperties.properties["enable.receipt.voucherType"] = chk_ReceiptVoucherType.Checked;
-
-            ApplicationProperties.properties["isDownloadByEmployeesEnabled"] = chk_DownloadByEmployeeVoucher.Checked.ToString();
-            ApplicationProperties.properties["download.by.employees"] =(chk_DownloadByEmployeeVoucher.Checked) ? txtEmployees.Text : "";
-
-            ApplicationProperties.properties["download.by.employee.voucher"] = chk_DownloadByEmployeeVoucher.Checked.ToString();
-            ApplicationProperties.properties["PaymentModeRemarks"]=chk_paymentMode.Checked.ToString();
-            ApplicationProperties.updatePropertiesFile();
+			ApplicationProperties.updatePropertiesFile(StringUtilsCustom.TALLY_COMPANY);
         }
 
 

@@ -345,7 +345,7 @@ namespace SNR_ClientApp.Services
                 else
                 {
 					List<String> succesOrders = new();
-
+					List<String> failedOrders = new();
 					LogManager.WriteLog("downloading inventory data from server with date.");
 					SalesVoucherGenerateXml salesVoucherGenerateXml = new();
 					SalesOrderGenerateXml salesOrderGenerateXml = new();
@@ -381,6 +381,7 @@ namespace SNR_ClientApp.Services
 							LogManager.WriteLog("Time to post orders to tally" + timedif);
 							DownloadResponseDto resp = res.body as DownloadResponseDto;
 							succesOrders = resp.SuccessOrders;
+
 							//succesOrders = (List<String>)res.body;
 							if (succesOrders.Count > 0)
 							{
@@ -390,12 +391,15 @@ namespace SNR_ClientApp.Services
 								var updatetimediff = updatetime - DateTime.Now;
 								LogManager.WriteLog("Time to update status:" + datediff);
 								LogManager.WriteLog(+succesOrders.Count + " Sales  downloaded");
+								uC_Logger.AppendLogMsg(+totalSuccessCount + "Sales  Downloaded Successfully");
+							
 
 							}
 							if (resp.FailedOrders.Count > 0)
 							{
 								totalFailureCount = totalFailureCount + resp.FailedOrders.Count;
 								LogManager.WriteLog(+resp.FailedOrders.Count + " Sales failed to downloaded");
+								updatesalesOrderStatus(failedOrders, uC_Logger);
 								var updatetime = DateTime.Now;
 								string updatesalesOrderFailedStatus = ApiConstants.UPDATE_ORDER_STATUS_PENDING;
 								var updatetimediff = updatetime - DateTime.Now;
@@ -403,6 +407,8 @@ namespace SNR_ClientApp.Services
 								HttpContent content2 = new StringContent(JsonConvert.SerializeObject(resp.FailedOrders), Encoding.UTF8, "application/json");
 								HttpResponseMessage updateResult = httpClient.PostAsync(updatesalesOrderFailedStatus, content2).Result;
 
+								
+								uC_Logger.AppendLogMsg(+totalFailureCount + "Sales Failed to Downloaded");
 								if (resp.failedOrdersLineErrors != null && resp.failedOrdersLineErrors.Count > 0 && !resp.isLedgerMissmatch)
 								{
 									string joinedString = string.Join(" \n", resp.failedOrdersLineErrors);
@@ -446,6 +452,7 @@ namespace SNR_ClientApp.Services
 									//succesOrders = (List<String>)res.body;
 									DownloadResponseDto resp = res.body as DownloadResponseDto;
 									succesOrders = resp.SuccessOrders;
+									
 									if (succesOrders.Count > 0)
 									{
 
@@ -455,15 +462,18 @@ namespace SNR_ClientApp.Services
 										var difftoUpdate = timetoupdate - DateTime.Now;
 										LogManager.WriteLog("Time to update primary salesOrder:{0}" + difftoUpdate);
 										LogManager.WriteLog(+succesOrders.Count + " Sales Order downloaded");
+									
+										uC_Logger.AppendLogMsg(+totalSuccessCount + " Sales Order Downloaded Succesfully");
+
 									}
 									if (resp.FailedOrders.Count > 0)
 									{
 										totalFailureCount = totalFailureCount + resp.FailedOrders.Count;
 										string updatesalesOrderFailedStatus = ApiConstants.UPDATE_ORDER_STATUS_PENDING;
-
+									
 										HttpContent content2 = new StringContent(JsonConvert.SerializeObject(resp.FailedOrders), Encoding.UTF8, "application/json");
 										HttpResponseMessage updateResult = httpClient.PostAsync(updatesalesOrderFailedStatus, content2).Result;
-										LogManager.WriteLog(+resp.FailedOrders.Count + " Sales Order Failed to Download");
+										uC_Logger.AppendLogMsg(+totalFailureCount + " Sales Order Failed Downloaded");
 									}
 									if (resp.isLedgerMissmatch)
 									{
@@ -589,7 +599,12 @@ namespace SNR_ClientApp.Services
         {
             try
             {
-                string serverAddress;
+				var tallyCompanyName = ApplicationProperties.properties["tally.company"].ToString();
+				//var myContent = JsonConvert.SerializeObject(tallyCompanyName);
+				HttpContent content = new StringContent(tallyCompanyName, Encoding.UTF8, "application/json");
+				
+
+				string serverAddress;
                 List<SalesOrderDTO> salesOrderDTOs = new();
                  String formattedDate = salesDate.Value.ToString("yyyy-MM-dd");
               if(ApplicationProperties.properties["IsEnableDistributor"].ToString().Equals("true", StringComparison.OrdinalIgnoreCase))
@@ -597,17 +612,17 @@ namespace SNR_ClientApp.Services
                     if (ApplicationProperties.properties["enable.date"].ToString().Equals("true", StringComparison.OrdinalIgnoreCase))
                     {
                         var distcode = ApplicationProperties.properties["DistributedCode"].ToString();
-                        serverAddress = ApiConstants.DOWNLOAD_ORDER_WITHDISTRIBUTED_CODE + "?voucherType=" + voucherType+"&DistributorCode="+distcode;
+                        serverAddress = ApiConstants.DOWNLOAD_ORDER_WITHDISTRIBUTED_CODE + "?voucherType=" + voucherType+"&DistributorCode="+distcode + "&companyName=" + tallyCompanyName;
                     }
                     else if (ApplicationProperties.properties["enable.Selecteddate"].ToString().Equals("true", StringComparison.OrdinalIgnoreCase))
                     {
                              var distcode = ApplicationProperties.properties["DistributedCode"].ToString();
-                            serverAddress = ApiConstants.DOWNLOAD_ORDER_WITHDISTRIBUTED_CODE + "?voucherType=" + voucherType+"&DistributorCode="+distcode+"&salesDate=" +formattedDate;
+                            serverAddress = ApiConstants.DOWNLOAD_ORDER_WITHDISTRIBUTED_CODE + "?voucherType=" + voucherType+"&DistributorCode="+distcode+"&salesDate=" +formattedDate + "&companyName=" + tallyCompanyName;
                        }
                      else
                     {
                         var distcode = ApplicationProperties.properties["DistributedCode"].ToString();
-                        serverAddress = ApiConstants.DOWNLOAD_ORDER_WITHDISTRIBUTED_CODE + "?voucherType=" + voucherType + "&DistributorCode="+distcode;
+                        serverAddress = ApiConstants.DOWNLOAD_ORDER_WITHDISTRIBUTED_CODE + "?voucherType=" + voucherType + "&DistributorCode="+distcode + "&companyName=" + tallyCompanyName;
                      }
                  }
                 else
@@ -616,15 +631,15 @@ namespace SNR_ClientApp.Services
                     {
                         if (ApplicationProperties.properties["enable.date"].ToString().Equals("true", StringComparison.OrdinalIgnoreCase))
                         {
-                             serverAddress=ApiConstants.DOWNLOAD_BY_VOUCHER_TYPE+"?voucherType=" + voucherType;
+                             serverAddress=ApiConstants.DOWNLOAD_BY_VOUCHER_TYPE+"?voucherType=" + voucherType + "&companyName=" + tallyCompanyName;
                         }
                         else if(ApplicationProperties.properties["enable.Selecteddate"].ToString().Equals("true", StringComparison.OrdinalIgnoreCase))
                         {
-                            serverAddress = ApiConstants.DOWNLOAD_BY_VOUCHER_TYPE + "?voucherType=" + voucherType + " &salesDate=" + formattedDate;
+                            serverAddress = ApiConstants.DOWNLOAD_BY_VOUCHER_TYPE + "?voucherType=" + voucherType + " &salesDate=" + formattedDate + "&companyName=" + tallyCompanyName;
                         }
                         else
                         {
-                            serverAddress=ApiConstants.DOWNLOAD_BY_VOUCHER_TYPE + "?voucherType=" + voucherType;
+                            serverAddress=ApiConstants.DOWNLOAD_BY_VOUCHER_TYPE + "?voucherType=" + voucherType + "&companyName=" + tallyCompanyName;
                         }
 
                     }
@@ -633,15 +648,15 @@ namespace SNR_ClientApp.Services
                         if (ApplicationProperties.properties["enable.date"].ToString().Equals("true", StringComparison.OrdinalIgnoreCase))
                         {
 
-                            serverAddress=ApiConstants.DOWNLOAD_BY_VOUCHER_TYPE_NOT_OPTIMIZED+"?voucherType=" + voucherType;
+                            serverAddress=ApiConstants.DOWNLOAD_BY_VOUCHER_TYPE_NOT_OPTIMIZED+"?voucherType=" + voucherType + "&companyName=" + tallyCompanyName;
                         }
                         else if (ApplicationProperties.properties["enable.Selecteddate"].ToString().Equals("true", StringComparison.OrdinalIgnoreCase))
                         {
-                            serverAddress = ApiConstants.DOWNLOAD_BY_VOUCHER_TYPE_NOT_OPTIMIZED + "?voucherType=" + voucherType + " &salesDate=" + formattedDate;
+                            serverAddress = ApiConstants.DOWNLOAD_BY_VOUCHER_TYPE_NOT_OPTIMIZED + "?voucherType=" + voucherType + " &salesDate=" + formattedDate + "&companyName=" + tallyCompanyName;
                         }
                         else
                         {
-                            serverAddress=ApiConstants.DOWNLOAD_BY_VOUCHER_TYPE_NOT_OPTIMIZED+"?voucherType=" + voucherType;
+                            serverAddress=ApiConstants.DOWNLOAD_BY_VOUCHER_TYPE_NOT_OPTIMIZED+"?voucherType=" + voucherType + "&companyName=" + tallyCompanyName;
                         }
 
 

@@ -20,14 +20,16 @@ using System.Threading.Tasks;
 using System.Xml.Serialization;
 using System.Xml;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
+using Newtonsoft.Json;
+using SNR_ClientApp.Parsers;
 
 
 namespace SNR_ClientApp.Services
 {
     public class TallyService
     {
-
-        Dictionary<string, string> props = new Dictionary<string, string>();
+		public OdbcConnection con;
+		public static Dictionary<string, string> props = new Dictionary<string, string>();
         TallyCommunicator tallyCommunicator = new TallyCommunicator();
 
         public Boolean Connect(String host, String port,String odbcDsn = "")
@@ -47,9 +49,9 @@ namespace SNR_ClientApp.Services
                 ApplicationProperties.setProperties(props);
                 if(!host.Equals("localhost",StringComparison.OrdinalIgnoreCase))
                 {
-                  return tallyCommunicator.TryConnectTally();
+                  return TryConnectTally();
                 }
-                OdbcConnection con = tallyCommunicator.GetConnection();
+                OdbcConnection con = GetConnection();
                 if (con != null && con.State == ConnectionState.Open)
                 {
                     return true;
@@ -71,12 +73,75 @@ namespace SNR_ClientApp.Services
 
 
         }
+		public OdbcConnection GetConnection()
+		{
+			string source = "";
+			try
+			{
+				LogManager.WriteLog("Get Connection to Tally ");
+				//props = ApplicationProperties.getAllProperties();
+				//source = "DSN=TallyODBC64_9000;PORT=9000;DRIVER=;DRIVER=Tally ODBC Driver64;SERVER=192.168.1.12";
+				//source = "DSN=TallyODBC64_9000;PORT=" + props.GetValueOrDefault("tally.port") + ";DRIVER=Tally ODBC Driver;SERVER={(" + props.GetValueOrDefault("tally.hostname") + ")}";
+				//source = "Driver={Tally ODBC Driver};Server="+props.GetValueOrDefault("tally.hostname")+";Port="+ props.GetValueOrDefault("tally.port")+";DSN=TallyODBC64_9000;";
+				string odbcDsn = ApplicationProperties.userinitialproperty["tally.odbcdsn"].ToString();
+				//source = "SERVER="+ props.GetValueOrDefault("tally.hostname") +";DSN=TallyODBC64_"+ props.GetValueOrDefault("tally.port")+";PORT=" + props.GetValueOrDefault("tally.port") + ";DRIVER=Tally ODBC Driver64;" ;
+				source = "SERVER=" + ApplicationProperties.userinitialproperty["tally.hostname"] + ";DSN=" + odbcDsn + ";PORT=" + props.GetValueOrDefault("tally.port") + ";DRIVER=Tally ODBC Driver64;";
 
-        internal async Task<object[]> getCompanies()
+				//LogManager.WriteLog("\nConnection String : " + source);
+				//con.Dispose();
+				//string source = "DSN=TallyODBC64_9000;PORT=" + props.GetValueOrDefault("port") + ";DRIVER=Tally ODBC Driver;SERVER={(" + props.GetValueOrDefault("host") + ")}";
+				con = new OdbcConnection(source);
+				//OdbcConnection con = new OdbcConnection("Data Source=DESKTOP-INJ5THJ\\MSSQLEXPRESS; Initial Catalog = StudentManagementSystem; Integrated Security = True;");
+				//SqlConnection con = new SqlConnection("Data Source=AITRICH-WIN8\\sqlexpress;Initial Catalog=StudentManagementSystem;User ID=students;Password=password");
+				if (con.State == ConnectionState.Open)
+				{
+
+					con.Close();
+
+				}
+				con.Open();
+				return con;
+			}
+			catch (Exception e)
+			{
+				LogManager.WriteLog("Exception occured while getting Connection to Tally");
+				LogManager.HandleException(e, "Connection String : " + source);
+				throw e;
+			}
+		}
+		public bool TryConnectTally()
+		{
+			try
+			{
+				HttpClient client = new HttpClient();
+				client.BaseAddress = new Uri(ApplicationProperties.userinitialproperty.GetValueOrDefault("tally.full.url").ToString());
+				var responseTask = client.GetAsync("");
+
+				responseTask.Wait();
+
+				HttpResponseMessage Res = responseTask.Result;
+				if (Res.IsSuccessStatusCode)
+				{
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+
+			}
+			catch (Exception ex)
+			{
+				LogManager.HandleException(ex);
+				return false;
+			}
+		}
+
+		internal async Task<object[]> getCompanies()
         {
             List<String> Groups = new List<string>();
-            LogManager.WriteLog("listing company started...");
-            DataTable response = await tallyCommunicator.getdatatable("SELECT $Name FROM " + Tables.Company);
+           // LogManager.WriteLog("listing company started...");
+            DataTable response = await tallyCommunicator.getdatatableofTAlly("SELECT $Name FROM " + Tables.Company);
             if (response.Rows.Count > 0)
             {
 
@@ -94,20 +159,21 @@ namespace SNR_ClientApp.Services
 
         }
 
-        internal async  Task<String[]> getAllGroups()
+        internal async  Task<List<LocationDTO>> getAllGroups()
         {
-            List<String> Groups = new List<string>();
-            LogManager.WriteLog("listing Groups started...");
-            DataTable response = await tallyCommunicator.getdatatable("SELECT $Name FROM " + Tables.Groups);
-            if (response.Rows.Count > 0)
-            {
-                foreach (DataRow dr in response.Rows)
-                {
-                    Groups.Add(((string)dr["$name"]));
-                }
-            }
-            LogManager.WriteLog("listing Groups ended...");
-            return Groups.ToArray();
+			ENVELOPE tallyRequest = new ENVELOPE();
+			LogManager.WriteLog("listing Groups started...");
+			tallyRequest = CompanygroupGenerateXml.getCompanyGroupsXml();
+			var stringwriter = new System.IO.StringWriter();
+			System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
+			x.Serialize(stringwriter, tallyRequest);
+
+			var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
+			List<LocationDTO> _list = new List<LocationDTO>();
+			_list = AccountGroupResponseParser.CompanyGroupresponseParser(data);
+
+			
+			return _list;
         }
 		public async Task<String[]> getAllLedgersNamesByParentcess(String Parent)
 		{
@@ -135,7 +201,8 @@ namespace SNR_ClientApp.Services
 		public async Task<String[]> getAllLedgersNamesByParent(String Parent)
         {
             List<String> Groups = new List<string>();
-
+            ApplicationProperties.getAllProperties(StringUtilsCustom.TALLY_COMPANY);
+				
             DataTable response = new DataTable();
             StringBuilder Query = new StringBuilder();
 
@@ -157,6 +224,8 @@ namespace SNR_ClientApp.Services
 
         internal async Task<string[]> getAllGroupsCurrentAssets()
 		{
+			ApplicationProperties.getAllProperties(StringUtilsCustom.TALLY_COMPANY);
+
 			List<String> Groups = new List<string>();
 			LogManager.WriteLog("listing Groups started...");
 			string query = $"SELECT $Name FROM {Tables.Groups} WHERE $Parent = 'Current Assets' OR $Parent = 'GL 07; Current Assets'";

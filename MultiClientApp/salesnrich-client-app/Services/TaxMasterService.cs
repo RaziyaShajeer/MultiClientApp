@@ -4,7 +4,10 @@ using SNR_ClientApp.Config;
 using SNR_ClientApp.DTO;
 using SNR_ClientApp.Enums;
 using SNR_ClientApp.Exceptions;
+using SNR_ClientApp.Parsers;
 using SNR_ClientApp.Tally;
+using SNR_ClientApp.Tally.generateXml;
+using SNR_ClientApp.TallyResponses;
 using SNR_ClientApp.Utils;
 using System;
 using System.Collections.Generic;
@@ -19,79 +22,40 @@ namespace SNR_ClientApp.Services
     {
         TallyCommunicator tallyCommunicator ;
         HttpClient httpClient ;
-
-        public TaxMasterService()
+        TaxMasterParser taxMasterParser;
+		public TaxMasterService()
         {
             tallyCommunicator = new TallyCommunicator();
             httpClient = new HttpClient();
+            taxMasterParser = new TaxMasterParser();
         }
         internal async void getFromTallyAndUpload()
         {
-            try { 
-            List<TaxMasterDTO> taxMasterDTOs = new List<TaxMasterDTO>();
-
-            DataTable response = new DataTable();
-            StringBuilder Query = new StringBuilder();
-            Query.Append("select $name,$parent,$Address,$TAXTYPE,$SUBTAXTYPE,$TAXCLASSIFICATIONNAME,$VATCLASSIFICATIONRATE,$PRICELEVEL,$AlterID,$Guid from " + Tables.Ledger + " where  $Parent = 'Duties & Taxes' OR $Parent = 'GL 13; Duties & Taxes'");
-           
-            response = await tallyCommunicator.getdatatable(Query.ToString());
-
-            if (response.Rows.Count > 0)
+            try
             {
-                //TaxMasterDTO taxMasterDTO = new TaxMasterDTO();
-                foreach (DataRow dr in response.Rows)
-                {
-                    string taxtype= (dr["$TAXTYPE"] != DBNull.Value) ? (string)dr["$TAXTYPE"] : "";
-                    if (taxtype.Equals("GST"))
-                    {
-                        TaxMasterDTO taxMasterDTO = new TaxMasterDTO();
+                ENVELOPE tallyRequest = new ENVELOPE();
 
-                        taxMasterDTO.vatName = (dr["$name"] != DBNull.Value) ? (string)dr["$name"] : "";
-                        taxMasterDTO.vatClass = (dr["$TAXCLASSIFICATIONNAME"] != DBNull.Value) ? (string)dr["$TAXCLASSIFICATIONNAME"] : "";
-                        taxMasterDTO.alterId = (dr["$alterid"] != DBNull.Value) ? (long.Parse(dr["$alterid"].ToString())) : 0;
-                        double percentageOfCalculation= (dr["$VATCLASSIFICATIONRATE"] != DBNull.Value) ? ((StringUtilsCustom.ExtractDoubleValue(dr["$VATCLASSIFICATIONRATE"].ToString()))) : 0;
-                        if (percentageOfCalculation == 0)
-                        {
-                          //  String b = taxMasterDTO.vatName.Replace("[^\\d.]", "");
+                tallyRequest = TaxMasterGenerateXML.TaxMasterGenerateXml();
+                var stringwriter = new System.IO.StringWriter();
+                System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
+                x.Serialize(stringwriter, tallyRequest);
 
-                          String  b = String.Concat(taxMasterDTO.vatName.Where(char.IsDigit));
-                            try
-                            {
-                                if (b != "")
-                                {
-                                    double c = Convert.ToDouble(b);
-                                    percentageOfCalculation = c;
-                                }
-                            }
-                            catch (Exception e)
-                            {
-                                LogManager.WriteLog("number format exceptoion name that converting to String : "
-                                        + taxMasterDTO.vatName);
-                            }
-                        }
-                        if (percentageOfCalculation != 0)
-                        {
-                            String vatClass = taxMasterDTO.vatName.Replace("\\P{L}", "");
-                            taxMasterDTO.vatClass=vatClass;
-                            taxMasterDTO.vatPercentage=percentageOfCalculation;
-                            taxMasterDTOs.Add(taxMasterDTO);
-                        }
-                       
-                       
-                    }
-                }
-            
-              
-                upload(taxMasterDTOs);
+                var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
+                List<TaxMasterDTO> _list = new List<TaxMasterDTO>();
+                _list = TaxMasterParser.ParseTaxMasterListXml(data);
+                var myContent = JsonConvert.SerializeObject(_list);
+                LogManager.WriteLog(myContent.ToString());
+
+                upload(_list);
             }
-			}
-			catch (Exception ex)
-			{
-				LogManager.HandleException(ex);
-				throw ex;
-			}
-		
+            catch (Exception ex)
+            {
+                LogManager.HandleException(ex);
+                throw ex;
+            }
         }
+		
+        
 
         private void upload(List<TaxMasterDTO> list)
         {

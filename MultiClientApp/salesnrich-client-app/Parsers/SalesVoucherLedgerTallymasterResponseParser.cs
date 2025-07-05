@@ -14,9 +14,11 @@ namespace SNR_ClientApp.Parsers
     {
         public List<AccountProfileDTO> ParseSalesVoucherLedgerListXml(string tallyResponseXml)
         {
-            tallyResponseXml = tallyResponseXml.Replace("&#4;", " ").Replace("[&]", "");
+            tallyResponseXml = tallyResponseXml.Replace("&#4;", " ");
+			tallyResponseXml = tallyResponseXml.Replace("&apos;", "'");
+			tallyResponseXml = tallyResponseXml.Replace("&", "&");
 
-            StringBuilder savedSalesLedgerXml = new StringBuilder();
+			StringBuilder savedSalesLedgerXml = new StringBuilder();
             using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(tallyResponseXml)))
             {
                 savedSalesLedgerXml.Append(GetStringFromInputStream(stream));

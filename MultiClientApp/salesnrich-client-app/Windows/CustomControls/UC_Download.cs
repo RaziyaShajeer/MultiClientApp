@@ -83,7 +83,8 @@ namespace SNR_ClientApp.Windows.CustomControls
 
 		private void loadInitialValues()
 		{
-			loadCompanyNames();
+	
+			companySelect.SelectedItem = StringUtilsCustom.TALLY_COMPANY;
 			if ("true".Equals(byEmpVoucher, StringComparison.OrdinalIgnoreCase))
 			{
 				List<String> employees = new List<string>();
@@ -104,23 +105,7 @@ namespace SNR_ClientApp.Windows.CustomControls
 			}
 		}
 
-		private void loadCompanyNames()
-		{
-			try
-			{
-				//object[] row = tallyService.getCompanies();
-				//companySelect.DataSource = row;
-				List<string> names = new List<string>();
-				string company = CompanyService.getCompanyName();
-				names.Add(company);
-				companySelect.DataSource = names.ToArray();
-			}
-			catch (Exception e)
-			{
-				LogManager.HandleException(e);
-				MessageBox.Show("Unable to fetch Company names");
-			}
-		}
+
 		private void LoadLoggerArea()
 		{
 			uC_Logger = new UC_Logger();
@@ -927,6 +912,21 @@ namespace SNR_ClientApp.Windows.CustomControls
 		}
 
 		private void flowLayoutPanel1_Paint(object sender, PaintEventArgs e)
+		{
+
+		}
+
+		private void companySelect_SelectedIndexChanged(object sender, EventArgs e)
+		{
+			StringUtilsCustom.TALLY_COMPANY = companySelect.Text;
+
+			ApplicationProperties.getAllProperties(StringUtilsCustom.TALLY_COMPANY);
+
+			ApplicationProperties.properties["tally.company"] = companySelect.Text;
+			ApplicationProperties.updatePropertiesFile(StringUtilsCustom.TALLY_COMPANY);
+		}
+
+		private void flowLayoutPanel1_Paint_1(object sender, PaintEventArgs e)
 		{
 
 		}

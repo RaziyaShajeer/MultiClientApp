@@ -17,6 +17,9 @@ using static System.ComponentModel.Design.ObjectSelectorEditor;
 using System.Windows.Forms;
 using System.Xml.Linq;
 using SNR_ClientApp.Properties;
+using SNR_ClientApp.TallyResponses;
+using SNR_ClientApp.Parsers;
+using SNR_ClientApp.Tally.generateXml;
 
 namespace SNR_ClientApp.Services
 {
@@ -25,49 +28,42 @@ namespace SNR_ClientApp.Services
         Dictionary<string, string> props = new Dictionary<string, string>();
         TallyCommunicator tallyCommunicator = new TallyCommunicator();
         HttpClient httpClient = new HttpClient();
-        private bool fullUpdate =true;
-        private string idClentApp = ApplicationProperties.properties.GetValueOrDefault("idclientapp").ToString();
+        CompanyAccountGroupXml companyAccountGroupXml=new CompanyAccountGroupXml();
+		private bool fullUpdate =true;
+
+        private string idClentApp = ApplicationProperties.userinitialproperty.GetValueOrDefault("idclientapp").ToString();
 
         public ProductGroupService()
         {
             httpClient = RestClientUtil.getClient();
+
         }
-        internal async  void getFromTallyAndUpload(bool isoptimised)
+		
+
+		internal async  void getFromTallyAndUpload(bool isoptimised)
         {
             try
             {
-                List<ProductGroupDTO> _list = new List<ProductGroupDTO>();
-                DataTable response = new DataTable();
-                StringBuilder Query = new StringBuilder();
-                Query.Append("SELECT $name,$alterid,$guid,$RateOfVat FROM " + Tables.StockGroup);
-                if (isoptimised)
+				ENVELOPE tallyRequest = new ENVELOPE();
+
+				tallyRequest = companyAccountGroupXml.getCompanyAccountGroupsXml();
+
+
+				var stringwriter = new System.IO.StringWriter();
+				System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
+				x.Serialize(stringwriter, tallyRequest);
+
+				var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
+
+
+				List<ProductGroupDTO> _list = new List<ProductGroupDTO>();
+			_list= ProductGroupMasterResponseParser.ParseStockGroupListXml(data);
+
+
+                
+
+                if (_list.Count > 0)
                 {
-                    long alterID = getAlterId();
-
-                    Query.Append(" where $Alterid >" + alterID);
-                    fullUpdate = false;
-                    //Query = "SELECT $name,$alterid,$guid FROM " + Tables.StockGroup + " where $Alterid >" + alterID;
-                    //response = tallyCommunicator.getdatatable("SELECT $name,$alterid,$guid FROM " + Tables.StockGroup + " where $Alterid >"+alterID);
-                }
-                response = await tallyCommunicator.getdatatable(Query.ToString());
-
-                if (response.Rows.Count > 0)
-                {
-
-                    foreach (DataRow dr in response.Rows)
-                    {
-                      
-                        var productGroupId = ((string)dr["$guid"]);
-                        // productGroupDTO.alterId = ((double)dr["$alterid"]);
-                        var name= ((string)dr["$name"]);
-
-                        var s = dr["$RateOfVat"];
-                     var taxRate = (s != DBNull.Value && s!="") ? (StringUtilsCustom.ExtractDoubleValue(dr["$RateOfVat"].ToString())) : 0;
-                        var alterId = (dr["$Alterid"] != DBNull.Value  && dr["$Alterid"]!="") ? ((StringUtilsCustom.ExtractDoubleValue(dr["$alterid"].ToString()))) : 0;
-						ProductGroupDTO productGroupDTO = new ProductGroupDTO(productGroupId,name, taxRate,alterId);
-						_list.Add(productGroupDTO);
-
-                    }
 					var myContent = JsonConvert.SerializeObject(_list);
                     LogManager.WriteLog(myContent.ToString());
 					upload(_list);
@@ -110,17 +106,14 @@ namespace SNR_ClientApp.Services
             {
                 string requestUri = ApiConstants.PREFIX + ApiConstants.PRODUCT_GROUP;
 
-                if (idClentApp.Equals("true", StringComparison.OrdinalIgnoreCase))
-                {
-                    requestUri = ApiConstants.PREFIX + ApiConstants.PRODUCT_GROUP_ID;
-                }
+             
                 LogManager.WriteLog("uploading PRODUCT GROUP started...");
                 httpClient = RestClientUtil.getClient();
                 var myContent = JsonConvert.SerializeObject(list);
                 LogManager.WriteRequestContentLog(myContent, requestUri);
                 HttpContent inputContent = new StringContent(myContent, Encoding.UTF8, "application/json");
 
-                var responseTask = httpClient.PostAsync(requestUri+ "?fullUpdate="+fullUpdate, inputContent);
+                var responseTask = httpClient.PostAsync(requestUri, inputContent);
 
                 responseTask.Wait();
 

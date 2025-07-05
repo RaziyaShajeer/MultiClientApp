@@ -1,6 +1,11 @@
-﻿using SNR_ClientApp.Enums;
+﻿using Newtonsoft.Json;
+using SNR_ClientApp.Enums;
+using SNR_ClientApp.Parsers;
 using SNR_ClientApp.Properties;
 using SNR_ClientApp.Tally;
+using SNR_ClientApp.Tally.generateXml;
+using SNR_ClientApp.TallyResponses;
+using SNR_ClientApp.Utils;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -17,7 +22,8 @@ namespace SNR_ClientApp.DTO
         private bool fullUpdate = true;
         private string idClentApp;
         private String tallyLedgerParent;
-        public GroupsService()
+		CompanyAccountGroupXml companyAccountGroupXml = new CompanyAccountGroupXml();
+		public GroupsService()
         {
             tallyCommunicator = new TallyCommunicator();
             httpClient = new HttpClient();
@@ -27,32 +33,22 @@ namespace SNR_ClientApp.DTO
 
         public async Task<List<LocationDTO>> getCompanyAccountGroups()
         {
-            List<LocationDTO> _list = new List<LocationDTO>();
-            DataTable response = new DataTable();
-            StringBuilder Query = new StringBuilder();
-            Query.Append("select $guid,$name,$alterid,$Parent from " + Tables.Groups);
+			ENVELOPE tallyRequest = new ENVELOPE();
 
-            response = await tallyCommunicator.getdatatable(Query.ToString());
-
-            if (response.Rows.Count > 0)
-            {
+			tallyRequest = CompanygroupGenerateXml.getCompanyGroupsXml();
 
 
-                foreach (DataRow dr in response.Rows)
-                {
-                    LocationDTO locationDTO = new LocationDTO();
-                    locationDTO.locationId = ((string)dr["$guid"]);
-                    locationDTO.name = (dr["$name"] != DBNull.Value) ? (string)dr["$name"] : "";
-                    locationDTO.description = (dr["$parent"] != DBNull.Value) ? (string)dr["$parent"] : "";
 
-                    locationDTO.alterId = (dr["$alterid"] != DBNull.Value) ? (long.Parse(dr["$alterid"].ToString())) : 0;
+			var stringwriter = new System.IO.StringWriter();
+			System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
+			x.Serialize(stringwriter, tallyRequest);
 
-                    _list.Add(locationDTO);
+			var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
+			List<LocationDTO> _list = new List<LocationDTO>();
+			_list = AccountGroupResponseParser.CompanyGroupresponseParser(data);
 
-                }
-
-                // List<LocationDTO> filteredGroups = accountGroupsFilter(_list);
-            }
+		
+       
             return _list;
 
         }
@@ -69,12 +65,21 @@ namespace SNR_ClientApp.DTO
                         sundryChild.Add(stockGroup);
                     }
                 }
-           
-            foreach (LocationDTO sg in sundryChild)
+            LogManager.WriteLog("Groups unders sundry");
+			var myContent = JsonConvert.SerializeObject(sundryChild);
+			LogManager.WriteLog(myContent.ToString());
+
+			foreach (LocationDTO sg in sundryChild)
             {
                 filteredGroups.Add(sg);
+
+
+
             }
-            List<LocationDTO> filteredAllGroups = fileList(sundryChild, filteredGroups, allGroups);
+			LogManager.WriteLog("filteredGroup");
+		 myContent = JsonConvert.SerializeObject(sundryChild);
+			LogManager.WriteLog(myContent.ToString());
+			List<LocationDTO> filteredAllGroups = fileList(sundryChild, filteredGroups, allGroups);
             return filteredAllGroups;
         }
         private List<LocationDTO> fileList(List<LocationDTO> sundryChild, List<LocationDTO> filteredGroups,

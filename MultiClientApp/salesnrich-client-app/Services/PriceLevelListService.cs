@@ -104,13 +104,12 @@ namespace SNR_ClientApp.Services
         {
             try
             {
-                idClentApp = ApplicationProperties.properties.GetValueOrDefault("idclientapp").ToString();
+                //idClentApp = ApplicationProperties.properties.GetValueOrDefault("idclientapp").ToString();
                 LogManager.WriteLog("Uploading PriceLevel To Server Started....");
-                string requestUri = ApiConstants.PREFIX + ApiConstants.PRICE_LIST_LEVEL_LIST;//SNR_CLIENT_APP_PLL_1
-				if (idClentApp.Equals("true", StringComparison.OrdinalIgnoreCase))
-                {
-                     requestUri = ApiConstants.PREFIX + ApiConstants.PRICE_LIST_LEVEL_LIST_ID; //SNR_CLIENT_APP_PLL_2
-				} 
+              
+				
+                   string  requestUri = ApiConstants.PREFIX + ApiConstants.PRICE_LIST_LEVEL_LIST_ID; //SNR_CLIENT_APP_PLL_2
+				
 
 
 

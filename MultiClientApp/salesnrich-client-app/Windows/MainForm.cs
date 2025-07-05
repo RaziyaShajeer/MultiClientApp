@@ -19,12 +19,12 @@ namespace SNR_ClientApp.Windows
     {
         static List<string> allAssignedSyncOperations;
         private static bool downloadStatus;
-        BackgroundTaskManagerService _BackgroundTaskManagerService;
+       
         public MainForm ()
         {
 
             InitializeComponent();
-            _BackgroundTaskManagerService=new BackgroundTaskManagerService();
+           // _BackgroundTaskManagerService=new BackgroundTaskManagerService();
             UC_UserHome home = new UC_UserHome();
             AddUserControl(home);
 

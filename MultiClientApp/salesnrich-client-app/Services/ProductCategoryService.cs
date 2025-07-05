@@ -3,8 +3,11 @@ using SNR_ClientApp.Config;
 using SNR_ClientApp.DTO;
 using SNR_ClientApp.Enums;
 using SNR_ClientApp.Exceptions;
+using SNR_ClientApp.Parsers;
 using SNR_ClientApp.Properties;
 using SNR_ClientApp.Tally;
+using SNR_ClientApp.Tally.generateXml;
+using SNR_ClientApp.TallyResponses;
 using SNR_ClientApp.Utils;
 using System;
 using System.Collections.Generic;
@@ -19,56 +22,45 @@ namespace SNR_ClientApp.Services
     {
         TallyCommunicator tallyCommunicator = new TallyCommunicator();
         HttpClient httpClient = new HttpClient();
-      
-        private string idClentApp = ApplicationProperties.properties.GetValueOrDefault("idclientapp").ToString();
+        CompanyStockCategoryXml companyStockCategory = new CompanyStockCategoryXml();
+
+		private string idClentApp = ApplicationProperties.userinitialproperty.GetValueOrDefault("idclientapp").ToString();
         internal async void getFromTallyAndUpload(bool isoptimised)
         {
-            try { 
-            List<ProductCategoryDTO> _list = new List<ProductCategoryDTO>();
-           
-            DataTable response = new DataTable();
-            StringBuilder Query = new StringBuilder();
-            Query.Append("select $name,$parent,$AlterID,$Guid from " + Tables.StockCategory);
-            if (isoptimised)
+            try
             {
-                long alterID = getAlterId();
-               
-                Query.Append(" where $Alterid >" + alterID);
-               
-            }
-            response =await tallyCommunicator.getdatatable(Query.ToString());
-          
-            if (response.Rows.Count > 0)
-            {
-               
-                foreach (DataRow dr in response.Rows)
-                {
-                    ProductCategoryDTO productCategoryDTO = new ProductCategoryDTO();
-                    productCategoryDTO.productCategoryId = ((string)dr["$guid"]);
-                    productCategoryDTO.activated=true;
-                    // productGroupDTO.alterId = ((double)dr["$alterid"]);
-                    productCategoryDTO.name = ((string)dr["$name"]);
 
-                    productCategoryDTO.alterId = (dr["$alterid"] != DBNull.Value && (dr["$alterid"] != "") )? (StringUtilsCustom.ExtractDoubleValue(dr["$alterid"].ToString())) : 0;
-                    
-                    _list.Add(productCategoryDTO);
-                }
-               
+                ENVELOPE tallyRequest = new ENVELOPE();
+
+                tallyRequest = companyStockCategory.getCompanyStockCategoryXml();
+
+
+
+                var stringwriter = new System.IO.StringWriter();
+                System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
+                x.Serialize(stringwriter, tallyRequest);
+
+                var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
+
+
+                List<ProductCategoryDTO> _list = new List<ProductCategoryDTO>();
+                _list = ProductCategoryRsponseParser.ParseStockCategoryListXml(data);
+
+                ProductCategoryDTO productCategory = new ProductCategoryDTO();
+                productCategory.name = "Not Applicable";
+                productCategory.productCategoryId = "Not Applicable";
+                productCategory.alterId = 0;
+                productCategory.activated = true;
+                _list.Add(productCategory);
+                upload(_list);
+
             }
-            ProductCategoryDTO productCategory = new ProductCategoryDTO();
-            productCategory.name = "Not Applicable";
-            productCategory.productCategoryId = "Not Applicable";
-            productCategory.alterId = 0;
-            productCategory.activated = true;
-            _list.Add(productCategory);
-            upload(_list);
-			}
-			catch (Exception ex)
-			{
-				LogManager.HandleException(ex);
-				throw ex;
-			}
-		}
+            catch (Exception ex)
+            {
+                LogManager.HandleException(ex);
+                throw ex;
+            }
+        }
 
         private void upload(List<ProductCategoryDTO> list)
         {
@@ -76,10 +68,6 @@ namespace SNR_ClientApp.Services
             {
                 string requestUri = ApiConstants.PREFIX + ApiConstants.PRODUCT_CATEGORY;
 
-                if (idClentApp.Equals("true", StringComparison.OrdinalIgnoreCase))
-                {
-                    requestUri = ApiConstants.PREFIX + ApiConstants.PRODUCT_CATEGORY_ID;
-                }
                 LogManager.WriteLog("uploading PRODUCT_CATEGORY started...\n");
 
                 httpClient = RestClientUtil.getClient();

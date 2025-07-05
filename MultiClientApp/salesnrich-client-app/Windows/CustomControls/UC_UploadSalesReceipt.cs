@@ -28,7 +28,9 @@ namespace SNR_ClientApp.Windows.CustomControls
         public UC_UploadSalesReceipt()
         {
             InitializeComponent();
-            uC_Logger = new UC_Logger();
+			companySelect.DataSource = LoadCompanyNames.LoadCompanyNamesoftally();
+            companySelect.SelectedItem= StringUtilsCustom.TALLY_COMPANY; 
+			uC_Logger = new UC_Logger();
             companyService = new CompanyService();
             tallyService = new TallyService();
             uC_Logger = new UC_Logger();
@@ -173,10 +175,15 @@ namespace SNR_ClientApp.Windows.CustomControls
             {
                 //LogManager.WriteLog("upload Sales started.");
                 appendLogMessage("Verifying tally and compnay.");
-                checkTallyCompanyIsOpened();
+                if (!await checkTallyCompanyIsOpened())
+                {
+					MessageBox.Show("Please ensure company is open in tally ");
+				}
 
                 DateTime date = DatePicker.Value;
-                if (date == null)
+                DateTime fromdate =FromDate.Value;
+
+				if (date == null)
                 {
                     appendLogMessage("please select date..!");
                     return;

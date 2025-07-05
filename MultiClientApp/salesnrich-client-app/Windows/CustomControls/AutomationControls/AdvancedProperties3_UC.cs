@@ -51,172 +51,233 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
         {
             try
             {
-                var taxRequired = ApplicationProperties.properties["tax.required"].ToString();
-                var salesOrderRemarks = ApplicationProperties.properties["sales.order.activity.remarks"].ToString();
-               
-
-                var cessLedgerName = ApplicationProperties.properties["Cess.ledger.name"].ToString();
-                var IsCessEnabled = ApplicationProperties.properties["IsCessEnabled"].ToString();
-                var invoiceNumberAsReference = ApplicationProperties.properties["invoice.number.as.reference"].ToString();
-                var salesorderNumberAsReference = ApplicationProperties.properties["salesorder.number.as.reference"].ToString();
-                var itemRemarks = ApplicationProperties.properties["item.remarks.enabled"];
-                var productRate = ApplicationProperties.properties["product.rate.including.tax"];
-                string cgstDutyHead = ApplicationProperties.properties["tally.productCGST"].ToString();
-                string sgstDutyHead = ApplicationProperties.properties["tally.productSGST"].ToString();
-                string igstDutyHead = ApplicationProperties.properties["tally.productIGST"].ToString();
-                var gstLedger = ApplicationProperties.properties["gst.ledger.calculation"];
-                string documentNoAsVoucher = ApplicationProperties.properties["DocumentNoAsVoucher"].ToString();
-                //New Code is being written from here.............
-                var reduceTax = ApplicationProperties.properties["reduce.tax"];
-
-                String gstParent = ApplicationProperties.properties["gstParentGroup"].ToString();
-                GstLedgersService gstLedgersService = new GstLedgersService();
-                List<GstLedgerDTO> allGstLedgerspTally = await gstLedgersService.getAllGstLedgers(gstParent);
-                string[] groups = await tallyService.getAllGroupsByParent(gstParent);
-                foreach (string group in groups)
-                {
-                    allGstLedgerspTally.AddRange(await gstLedgersService.getAllGstLedgers(group));
-                }
+				var taxRequired = ApplicationProperties.properties["tax.required"].ToString();
+				var salesOrderRemarks = ApplicationProperties.properties["sales.order.activity.remarks"].ToString();
 
 
-                List<DropdownDTO> dropdownList = new List<DropdownDTO>();
-                HashSet<string> uniqueValues = new HashSet<string>();
+				var cessLedgerName = ApplicationProperties.properties["Cess.ledger.name"].ToString();
+				var IsCessEnabled = ApplicationProperties.properties["IsCessEnabled"].ToString();
+				var invoiceNumberAsReference = ApplicationProperties.properties["invoice.number.as.reference"].ToString();
+				var salesorderNumberAsReference = ApplicationProperties.properties["salesorder.number.as.reference"].ToString();
+				var itemRemarks = ApplicationProperties.properties["item.remarks.enabled"].ToString();
+				var productRate = ApplicationProperties.properties["product.rate.including.tax"];
 
-                foreach (GstLedgerDTO itm in allGstLedgerspTally)
-                {
-                    // Check for duplicate values before adding to the list
-                    if (uniqueValues.Add(itm.gstDutyHead))
-                    {
-                        DropdownDTO dto = new DropdownDTO();
-                        dto.name = itm.gstDutyHead;
-                        dropdownList.Add(dto);
-                    }
-                }
+				var cgstDutyHead = ApplicationProperties.properties["tally.productCGST"].ToString();
+				var sgstDutyHead = ApplicationProperties.properties["tally.productSGST"].ToString();
+				var igstDutyHead = ApplicationProperties.properties["tally.productIGST"].ToString();
+				var gstLedger = ApplicationProperties.properties["gst.ledger.calculation"];
+				string documentNoAsVoucher = ApplicationProperties.properties["DocumentNoAsVoucher"].ToString();
+				var SalesOrderActivityRemarks = ApplicationProperties.properties["sales.order.activity.remarks"].ToString();
+				//New Code is being written from here.............
+				var reduceTax = ApplicationProperties.properties["reduce.tax"];
 
-
-                // Set the DataSource for each dropdown individually
-                taxTypeCGST.DataSource = new List<DropdownDTO>(dropdownList);
-                taxTypeSGST.DataSource = new List<DropdownDTO>(dropdownList);
-                taxTypeIGST.DataSource = new List<DropdownDTO>(dropdownList);
-
-                // Fetch selected values from dropdowns
-                string selectedCGSTValue = ApplicationProperties.properties["tally.productCGST"].ToString();
-                string selectedSGSTValue = ApplicationProperties.properties["tally.productSGST"].ToString();
-                string selectedIGSTValue = ApplicationProperties.properties["tally.productIGST"].ToString();
-
-                // Set the selected item for each dropdown
-                taxTypeCGST.SelectedIndex = taxTypeCGST.FindStringExact(selectedCGSTValue);
-                taxTypeSGST.SelectedIndex = taxTypeSGST.FindStringExact(selectedSGSTValue);
-                taxTypeIGST.SelectedIndex = taxTypeIGST.FindStringExact(selectedIGSTValue);
-                foreach(DropdownDTO itm in taxTypeCGST.Items)
-                {
-                    if(itm.ToString().IndexOf("CGST", StringComparison.OrdinalIgnoreCase) >= 0)
-                    {
-                        taxTypeCGST.SelectedItem=itm;
-                        break;
-                    }
-                    else
-                    {
-                        if (itm.ToString().IndexOf("Central Tax", StringComparison.OrdinalIgnoreCase) >= 0)
-                        {
-                            taxTypeCGST.SelectedItem=itm;
-                            break;
-                        }
-                    }
-
-                }
-                foreach (DropdownDTO itm in taxTypeIGST.Items)
-                {
-                    if (itm.ToString().IndexOf("IGST", StringComparison.OrdinalIgnoreCase) >= 0)
-                    {
-                        taxTypeIGST.SelectedItem=itm;
-                        break;
-                    }
-                    else
-                    {
-                        if (itm.ToString().IndexOf("Integrated Tax", StringComparison.OrdinalIgnoreCase) >= 0)
-                        {
-                            taxTypeIGST.SelectedItem=itm;
-                            break;
-                        }
-                    }
-
-                }
-                foreach (DropdownDTO itm in taxTypeSGST.Items)
-                {
-                    if (itm.ToString().IndexOf("SGST/UTGST", StringComparison.OrdinalIgnoreCase) >= 0)
-                    {
-                        taxTypeSGST.SelectedItem=itm;
-                        break;
-                    }
-                    else
-                    {
-                        if (itm.ToString().IndexOf("State Tax", StringComparison.OrdinalIgnoreCase) >= 0)
-                        {
-                            taxTypeSGST.SelectedItem=itm;
-                            break;
-                        }
-                    }
-
-                }
+				String gstParent = ApplicationProperties.properties["gstParentGroup"].ToString();
+				GstLedgersService gstLedgersService = new GstLedgersService();
+				List<GstLedgerDTO> allGstLedgerspTally = await gstLedgersService.getAllGstLedgers(gstParent);
+				string[] groups = await tallyService.getAllGroupsByParent(gstParent);
+				foreach (string group in groups)
+				{
+					allGstLedgerspTally.AddRange(await gstLedgersService.getAllGstLedgers(group));
+				}
 
 
-                //New Code Ends Here..!!
-                chk_DeductTax.Checked = reduceTax.ToString().ToLower().Equals("True");
-                chk_TaxRequired.Checked = taxRequired.ToString().ToLower().Equals("True");
-                chk_SalesOrderActivityRemarks.Checked = salesOrderRemarks.ToString().ToLower().Equals("True");
-                chk_ProductRate.Checked = productRate.ToString().ToLower().Equals("True");
-              
-                chk_Cess.Checked = IsCessEnabled.ToString().ToLower().Equals("True");
-                CessLedgerSelect.SelectedItem = (chk_Cess.Checked) ? cessLedgerName.ToString() : null;
-                chk_InvoiceNumberAsReference.Checked = invoiceNumberAsReference.ToString().ToLower().Equals("True");
-                chk_SoNo.Checked = salesorderNumberAsReference.ToString().ToLower().Equals("True");
-                chk_ItemRemarks.Checked = itemRemarks.ToString().ToLower().Equals("True");
-                doc_number.Checked = documentNoAsVoucher.ToString().ToLower().Equals("True");
-                chk_GstCalculation.Checked = gstLedger.ToString().ToLower().Equals("True");
+				List<DropdownDTO> dropdownList = new List<DropdownDTO>();
+				HashSet<string> uniqueValues = new HashSet<string>();
 
-            }
-            catch (Exception ex)
-            {
-                LogManager.WriteLog("Exception occured while Binding datas from properties file in Tally Advanced Properties .");
-                LogManager.HandleException(ex);
-            }
-        }
+				foreach (GstLedgerDTO itm in allGstLedgerspTally)
+				{
+					// Check for duplicate values before adding to the list
+					if (uniqueValues.Add(itm.gstDutyHead))
+					{
+						DropdownDTO dto = new DropdownDTO();
+						dto.name = itm.gstDutyHead;
+						dropdownList.Add(dto);
+					}
+				}
+
+
+				// Set the DataSource for each dropdown individually
+				taxTypeCGST.DataSource = new List<DropdownDTO>(dropdownList);
+				taxTypeSGST.DataSource = new List<DropdownDTO>(dropdownList);
+				taxTypeIGST.DataSource = new List<DropdownDTO>(dropdownList);
+
+				// Fetch selected values from dropdowns
+				string selectedCGSTValue = ApplicationProperties.properties["tally.productCGST"].ToString();
+				string selectedSGSTValue = ApplicationProperties.properties["tally.productSGST"].ToString();
+				string selectedIGSTValue = ApplicationProperties.properties["tally.productIGST"].ToString();
+
+				// Set the selected item for each dropdown
+				taxTypeCGST.SelectedIndex = taxTypeCGST.FindStringExact(selectedCGSTValue);
+				taxTypeSGST.SelectedIndex = taxTypeSGST.FindStringExact(selectedSGSTValue);
+				taxTypeIGST.SelectedIndex = taxTypeIGST.FindStringExact(selectedIGSTValue);
+				foreach (DropdownDTO itm in taxTypeCGST.Items)
+				{
+					if (itm.ToString().IndexOf("CGST", StringComparison.OrdinalIgnoreCase) >= 0)
+					{
+						taxTypeCGST.SelectedItem = itm;
+						break;
+					}
+					else
+					{
+						if (itm.ToString().IndexOf("Central Tax", StringComparison.OrdinalIgnoreCase) >= 0)
+						{
+							taxTypeCGST.SelectedItem = itm;
+							break;
+						}
+					}
+
+				}
+				foreach (DropdownDTO itm in taxTypeIGST.Items)
+				{
+					if (itm.ToString().IndexOf("IGST", StringComparison.OrdinalIgnoreCase) >= 0)
+					{
+						taxTypeIGST.SelectedItem = itm;
+						break;
+					}
+					else
+					{
+						if (itm.ToString().IndexOf("Integrated Tax", StringComparison.OrdinalIgnoreCase) >= 0)
+						{
+							taxTypeIGST.SelectedItem = itm;
+							break;
+						}
+					}
+
+				}
+				foreach (DropdownDTO itm in taxTypeSGST.Items)
+				{
+					if (itm.ToString().IndexOf("SGST/UTGST", StringComparison.OrdinalIgnoreCase) >= 0)
+					{
+						taxTypeSGST.SelectedItem = itm;
+						break;
+					}
+					else
+					{
+						if (itm.ToString().IndexOf("State Tax", StringComparison.OrdinalIgnoreCase) >= 0)
+						{
+							taxTypeSGST.SelectedItem = itm;
+							break;
+						}
+					}
+
+				}
+
+
+
+				if (reduceTax.ToString().Equals("True", StringComparison.OrdinalIgnoreCase))
+				{
+					chk_DeductTax.Checked = true;
+
+				}
+
+				if (taxRequired.ToString().Equals("True", StringComparison.OrdinalIgnoreCase))
+				{
+					chk_TaxRequired.Checked = true;
+
+				}
+				else
+				{
+					chk_TaxRequired.Checked = false;
+				}
+				if (salesOrderRemarks.ToString().Equals("True", StringComparison.OrdinalIgnoreCase))
+				{
+					chk_SalesOrderActivityRemarks.Checked = true;
+				}
+
+				if (productRate.ToString().Equals("True", StringComparison.OrdinalIgnoreCase))
+				{
+					chk_ProductRate.Checked = true;
+				}
+
+				if (IsCessEnabled.ToString().Equals("True", StringComparison.OrdinalIgnoreCase))
+				{
+					chk_Cess.Checked = true;
+					if (cessLedgerName.ToString() != null)
+					{
+						CessLedgerSelect.SelectedItem = cessLedgerName.ToString();
+					}
+					else
+					{
+						chk_Cess.Checked = false;
+					}
+
+
+
+				}
+				if (invoiceNumberAsReference.ToString().Equals("True", StringComparison.OrdinalIgnoreCase))
+				{
+					chk_InvoiceNumberAsReference.Checked = true;
+				}
+
+				if (salesorderNumberAsReference.ToString().Equals("True", StringComparison.OrdinalIgnoreCase))
+				{
+					chk_SoNo.Checked = true;
+				}
+				if (itemRemarks.Equals("True", StringComparison.OrdinalIgnoreCase))
+				{
+					chk_ItemRemarks.Checked = true;
+				}
+				else
+				{
+					chk_ItemRemarks.Checked = false;
+				}
+				if (documentNoAsVoucher.Equals("True", StringComparison.OrdinalIgnoreCase))
+				{
+					doc_number.Checked = true;
+				}
+				if (gstLedger.ToString().Equals("True", StringComparison.OrdinalIgnoreCase))
+				{
+					chk_GstCalculation.Checked = true;
+				}
+
+			}
+			catch (Exception ex)
+			{
+				LogManager.WriteLog("Exception occured while Binding datas from properties file in Tally Advanced Properties .");
+				LogManager.HandleException(ex);
+			}
+		}
 
         private void printDatasToProperties()
         {
-            ApplicationProperties.properties["tax.required"] = chk_TaxRequired.Checked.ToString();
-            ApplicationProperties.properties["sales.order.activity.remarks"] = chk_SalesOrderActivityRemarks.Checked.ToString();
-            ApplicationProperties.properties["item.remarks.enabled"] = chk_ItemRemarks.Checked.ToString();
+			ApplicationProperties.properties["tax.required"] = chk_TaxRequired.Checked.ToString();
+			ApplicationProperties.properties["reduce.tax"] = chk_DeductTax.Checked.ToString();
+			ApplicationProperties.properties["product.rate.including.tax"] = chk_ProductRate.Checked.ToString();
+			ApplicationProperties.properties["gst.ledger.calculation"] = chk_GstCalculation.Checked.ToString();
 			ApplicationProperties.properties["IsCessEnabled"] = chk_Cess.Checked.ToString();
-            if(chk_Cess.Checked)
-            {
-               if(CessLedgerSelect.SelectedItem.ToString() != null)
-                {
+			ApplicationProperties.properties["sales.order.activity.remarks"] = chk_SalesOrderActivityRemarks.Checked.ToString();
+			ApplicationProperties.properties["item.remarks.enabled"] = chk_ItemRemarks.Checked.ToString();
+
+
+
+			if (chk_Cess.Checked)
+			{
+				if (CessLedgerSelect.SelectedItem.ToString() != null)
+				{
 					ApplicationProperties.properties["Cess.ledger.name"] = (chk_Cess.Checked) ? CessLedgerSelect.SelectedItem.ToString() : "";
 				}
-                else
-                {
-                    chk_Cess.Checked = false;
-                }
-            }
-			
+				else
+				{
+					chk_Cess.Checked = false;
+				}
+			}
 
-            ApplicationProperties.properties["invoice.number.as.reference"] = chk_InvoiceNumberAsReference.Checked.ToString();
-            ApplicationProperties.properties["salesorder.number.as.reference"] = chk_SoNo.Checked.ToString();
 
-            ApplicationProperties.properties["DocumentNoAsVoucher"]=doc_number.Checked.ToString();
-            // Fetch selected values from dropdowns
-            string selectedCGSTValue = ((DropdownDTO)taxTypeCGST.SelectedItem)?.name ?? "";
-            string selectedSGSTValue = ((DropdownDTO)taxTypeSGST.SelectedItem)?.name ?? "";
-            string selectedIGSTValue = ((DropdownDTO)taxTypeIGST.SelectedItem)?.name ?? "";
-            ApplicationProperties.properties["reduce.tax"] = chk_DeductTax.Checked;
-            ApplicationProperties.properties["gst.ledger.calculation"] = chk_GstCalculation.Checked;
-            ApplicationProperties.properties["tally.productCGST"] = selectedCGSTValue.ToString();
-            ApplicationProperties.properties["tally.productSGST"] = selectedSGSTValue.ToString();
-            ApplicationProperties.properties["tally.productIGST"] = selectedIGSTValue.ToString();
 
-            ApplicationProperties.updatePropertiesFile();
+			ApplicationProperties.properties["invoice.number.as.reference"] = chk_InvoiceNumberAsReference.Checked.ToString();
+			ApplicationProperties.properties["salesorder.number.as.reference"] = chk_SoNo.Checked.ToString();
+
+			ApplicationProperties.properties["DocumentNoAsVoucher"] = doc_number.Checked.ToString();
+			// Fetch selected values from dropdowns
+			string selectedCGSTValue = ((DropdownDTO)taxTypeCGST.SelectedItem)?.name ?? "";
+			string selectedSGSTValue = ((DropdownDTO)taxTypeSGST.SelectedItem)?.name ?? "";
+			string selectedIGSTValue = ((DropdownDTO)taxTypeIGST.SelectedItem)?.name ?? "";
+
+			ApplicationProperties.properties["tally.productCGST"] = selectedCGSTValue.ToString();
+			ApplicationProperties.properties["tally.productSGST"] = selectedSGSTValue.ToString();
+			ApplicationProperties.properties["tally.productIGST"] = selectedIGSTValue.ToString();
+
+			ApplicationProperties.updatePropertiesFile(StringUtilsCustom.TALLY_COMPANY);
         }
 
 

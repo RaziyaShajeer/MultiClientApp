@@ -1,4 +1,5 @@
 ﻿using SNR_ClientApp.Enums;
+using SNR_ClientApp.Properties;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,5 +17,6 @@ namespace SNR_ClientApp.DTO
         public double totalTaxAmt { get; set; }
         public bool activated { get; set; }
         public String gstDutyHead { get; set; }
-    }
+       
+	}
 }

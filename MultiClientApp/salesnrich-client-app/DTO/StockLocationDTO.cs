@@ -28,14 +28,16 @@ namespace SNR_ClientApp.DTO
        this.activated = true;
        this.distributorCode=ApplicationProperties.properties["DistributedCode"].ToString();
       this.distributorName=ApplicationProperties.properties["DistributedCodeCompany"].ToString();
-        }
-        public StockLocationDTO ()
+		}
+		public string tallyCompanyName { get; set; }
+		public StockLocationDTO ()
         {
+			tallyCompanyName = ApplicationProperties.properties["tally.company"].ToString();
+		}
 
-        }
+	
+		
+		
 
-       
-          
-
-    }
+	}
 }
