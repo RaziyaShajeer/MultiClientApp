@@ -515,6 +515,7 @@ namespace SNR_ClientApp.Windows.CustomControls
 					}
 
 					// working async in server
+					
 					if (chk_priceLevelList_id.Checked)
 					{
 						await PriceLevelListUploadAsync();
@@ -523,7 +524,7 @@ namespace SNR_ClientApp.Windows.CustomControls
 
 					// working async in server
 					if (chk_openingStock.Checked)
-					{
+					{ 
 						await OpeningStockUploadAsync();
 
 					}

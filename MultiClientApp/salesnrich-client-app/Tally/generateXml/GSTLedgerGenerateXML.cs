@@ -1,4 +1,5 @@
-﻿using SNR_ClientApp.Properties;
+﻿using SNR_ClientApp.DTO;
+using SNR_ClientApp.Properties;
 using SNR_ClientApp.TallyResponses;
 using System;
 using System.Collections.Generic;
@@ -11,8 +12,19 @@ namespace SNR_ClientApp.Tally.generateXml
 {
 	public static class GSTLedgerGenerateXML
 	{
-		public static ENVELOPE GstLedgerGenerateXml(string parent)
+		public static ENVELOPE GstLedgerGenerateXml()
 		{
+			List<string> receiptUnderVoucherTypes = new List<string>(); ;
+			receiptUnderVoucherTypes.Add("Duties & Taxes");
+			receiptUnderVoucherTypes.Add("GL 13; Duties & Taxes");
+			StringBuilder voucherTypeStringBuilder = new StringBuilder();
+			string prefix = "";
+			foreach (string voucherType in receiptUnderVoucherTypes)
+			{
+				String vouchertypeNAme = prefix + " ($Parent= \"" + voucherType + "\")";
+				voucherTypeStringBuilder.Append(vouchertypeNAme);
+				prefix = "or";
+			}
 			ENVELOPE tallyRequest = new ENVELOPE();
 			HEADER header = new HEADER();
 			header.VERSION = "1";
@@ -73,7 +85,7 @@ namespace SNR_ClientApp.Tally.generateXml
 			line.ISINTERNAL = "No";
 			line.XMLtag = "Ledger";
 			// KEY MODIFICATION: Add FIELDS property to connect fields to the line
-			line.FIELD = "Field name, Field Parent, Field TaxType, Field SUBTAXTYPE, Field Guid,Field GSTDUTYHEAD FROM";
+			line.FIELD = "Field name, Field Parent, Field TaxType, Field SUBTAXTYPE, Field Guid,Field GSTDUTYHEAD FROM,Field RATEOFTAXCALCULATION";
 			List<LINE> lines = new List<LINE>();
 			lines.Add(line);
 			tdlmessage.LINE = lines;
@@ -140,7 +152,17 @@ namespace SNR_ClientApp.Tally.generateXml
 			field8.SET = "$GSTDUTYHEAD FROM";
 			field8.XMLTAG = "GSTDUTYHEAD FROM";
 			fieldList.Add(field8);
-			
+			FIELD field9 = new FIELD();
+			field9.NAME = "Field RATEOFTAXCALCULATION";
+			field9.ISMODIFY = "No";
+			field9.ISFIXED = "No";
+			field9.ISINITIALIZE = "No";
+			field9.ISOPTION = "No";
+			field9.ISINTERNAL = "No";
+			field9.SET = "$RATEOFTAXCALCULATION";
+			field9.XMLTAG = "RATEOFTAXCALCULATION";
+			fieldList.Add(field9);
+
 			tdlmessage.FIELD = fieldList;
 
 
@@ -156,9 +178,23 @@ namespace SNR_ClientApp.Tally.generateXml
 			types.Add("Ledgers");
 			collection.TYPE = types;
 			List<String> fetch = new List<string>();
-			collection.FETCH = "Name,Parent,TaxType,Guid,GSTDUTYHEAD,SUBTAXTYPE FROM";
+			collection.FETCH = "Name,Parent,TaxType,Guid,GSTDUTYHEAD,SUBTAXTYPE FROM,RATEOFTAXCALCULATION";
+
 			collectionsList.Add(collection);
+			List<String> filters = new List<string>();
+			filters.Add("ParentFilter");
+			collection.FILTERS = filters;
 			tdlmessage.COLLECTION = collectionsList;
+			List<SYSTEM> systems = new List<SYSTEM>();
+
+			SYSTEM filter = new SYSTEM();
+			filter.NAME = "ParentFilter";
+			filter.TYPE = "Formulae";
+			filter.Text = voucherTypeStringBuilder.ToString();
+			systems.Add(filter);
+			
+			tdlmessage.SYSTEM = systems;
+		
 			tdl.TDLMESSAGE = tdlmessage;
 			desc.TDL = tdl;
 			body.DESC = desc;

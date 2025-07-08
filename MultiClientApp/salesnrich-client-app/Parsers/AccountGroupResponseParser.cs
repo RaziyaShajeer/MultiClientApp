@@ -25,7 +25,7 @@ namespace SNR_ClientApp.Parsers
 		
 
 
-			tallyResponseXml = tallyResponseXml.Replace("&apos;", "'");
+			tallyResponseXml = tallyResponseXml.Replace("&apos;", "&");
 			tallyResponseXml = tallyResponseXml.Replace("&","");
 
 

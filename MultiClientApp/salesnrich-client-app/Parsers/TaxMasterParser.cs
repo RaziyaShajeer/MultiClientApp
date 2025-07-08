@@ -17,7 +17,8 @@ namespace SNR_ClientApp.Parsers
 		
 			tallyResponseXml = tallyResponseXml.Replace("&#4;", " ");
 			tallyResponseXml = tallyResponseXml.Replace("&apos;", "'");
-			tallyResponseXml = tallyResponseXml.Replace("&", "&");
+			tallyResponseXml = tallyResponseXml.Replace("&amp;", "&");
+
 			var doc = XDocument.Parse(tallyResponseXml);
 			List<TaxMasterDTO> taxMasterDTOs = new List<TaxMasterDTO>();
 			var TaxMAsters = doc.Descendants("LEDGER");

@@ -20,10 +20,12 @@ namespace SNR_ClientApp.Services
     {
         TallyCommunicator tallyCommunicator;
         HttpClient httpClient;
-        public GstLedgersService()
+        GST_LedgerParse gST_LedgerParse;
+		public GstLedgersService()
         {
             tallyCommunicator = new TallyCommunicator();
             httpClient = new HttpClient();
+            gST_LedgerParse=new GST_LedgerParse();
         }
         internal async  void getFromTallyAndUpload()
         {
@@ -47,14 +49,14 @@ namespace SNR_ClientApp.Services
         {
 
 			ENVELOPE tallyRequest = new ENVELOPE();
-			tallyRequest= GSTLedgerGenerateXML.GstLedgerGenerateXml(parent);
+			tallyRequest= GSTLedgerGenerateXML.GstLedgerGenerateXml();
 			var stringwriter = new System.IO.StringWriter();
 			System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
 			x.Serialize(stringwriter, tallyRequest);
 
 			var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
-			List<LocationDTO> _list = new List<LocationDTO>();
-			_list = AccountGroupResponseParser.CompanyGroupresponseParser(data);
+			List<GstLedgerDTO> _list = new List<GstLedgerDTO>();
+			_list =gST_LedgerParse.getAllGstLEdgers(data);
 			List<GstLedgerDTO> allGstLedgerspTally = new List<GstLedgerDTO>();
             DataTable response = new DataTable();
             StringBuilder Query = new StringBuilder();
