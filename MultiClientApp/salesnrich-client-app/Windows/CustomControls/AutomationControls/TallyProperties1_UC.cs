@@ -1,6 +1,10 @@
 ﻿using SNR_ClientApp.DTO;
+using SNR_ClientApp.Parsers;
 using SNR_ClientApp.Properties;
 using SNR_ClientApp.Services;
+using SNR_ClientApp.Tally;
+using SNR_ClientApp.Tally.generateXml;
+using SNR_ClientApp.TallyResponses;
 using SNR_ClientApp.Utils;
 using System;
 using System.Collections.Generic;
@@ -23,7 +27,7 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
         List<DropdownDTO> Cgsts;
         List<DropdownDTO> Sgsts;
         List<DropdownDTO> Igsts;
-
+        TallyCommunicator tallyCommunicator;
         List<DropdownDTO> SelectedGstList;
         List<DropdownDTO> SelectedIgstList;
         public TallyProperties1_UC()
@@ -32,7 +36,7 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
             Cgsts = new List<DropdownDTO>();
             Sgsts = new List<DropdownDTO>();
             Igsts = new List<DropdownDTO>();
-
+            tallyCommunicator = new TallyCommunicator();
             SelectedGstList = new List<DropdownDTO>();
             SelectedIgstList = new List<DropdownDTO>();
             InitializeComponent();
@@ -53,7 +57,19 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
 
         private async void LoadAccountGroupsCustomers()
         {
-            String[] row = await tallyService.getAllGroupsCurrentAssets();
+            ENVELOPE tallyRequest = new ENVELOPE();
+            LogManager.WriteLog("listing Groups started...");
+            tallyRequest =await groupsunderparentGenerateXml.groupsunderCurrentassetsGenerateXml();
+            var stringwriter = new System.IO.StringWriter();
+            System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
+            x.Serialize(stringwriter, tallyRequest);
+
+            var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
+
+            var row =await AccountGroupResponseParser.CompanyGroupnameresponseParser(data);
+
+
+            
             tallyLedgerParentSelect.DataSource = row;
             //if (row.Contains("Sundry Debtors"))
             //{
@@ -78,19 +94,13 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
         {
             try
             {
-				var groups = await tallyService.getAllGroups();
-
-				AccountGroupsSelect.Items.Clear();
-				AccountGroupsSelect.Items.AddRange(groups.ToArray());
-				SalesLedgerParentSelect.Items.Clear();
-				SalesLedgerParentSelect.Items.AddRange(groups.ToArray());
-                String[] row = new String[10];
-                    await tallyService.getAllGroups();
-                accountGroupParents = row;
+				var row = await tallyService.getAllGroups();
+                string[] rowArray = row.ToArray();
+                accountGroupParents = rowArray;
                 AccountGroupsSelect.Items.Clear();
-                AccountGroupsSelect.Items.AddRange(row);
+                AccountGroupsSelect.Items.AddRange(rowArray);
                 SalesLedgerParentSelect.Items.Clear();
-                SalesLedgerParentSelect.Items.AddRange(row);
+                SalesLedgerParentSelect.Items.AddRange(rowArray);
                 if (ApplicationProperties.properties["gstParentGroup"] != "")
                 {
                     String gstParent = ApplicationProperties.properties["gstParentGroup"].ToString();

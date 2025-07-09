@@ -12,19 +12,17 @@ namespace SNR_ClientApp.Tally.generateXml
 {
 	public static class GSTLedgerGenerateXML
 	{
-		public static ENVELOPE GstLedgerGenerateXml()
+		public static ENVELOPE GstLedgerGenerateXml(string parent)
 		{
 			List<string> receiptUnderVoucherTypes = new List<string>(); ;
-			receiptUnderVoucherTypes.Add("Duties & Taxes");
-			receiptUnderVoucherTypes.Add("GL 13; Duties & Taxes");
+			
 			StringBuilder voucherTypeStringBuilder = new StringBuilder();
-			string prefix = "";
-			foreach (string voucherType in receiptUnderVoucherTypes)
-			{
-				String vouchertypeNAme = prefix + " ($Parent= \"" + voucherType + "\")";
+			
+			
+				String vouchertypeNAme = " ($Parent= \"" + parent + "\")";
 				voucherTypeStringBuilder.Append(vouchertypeNAme);
-				prefix = "or";
-			}
+				
+			
 			ENVELOPE tallyRequest = new ENVELOPE();
 			HEADER header = new HEADER();
 			header.VERSION = "1";

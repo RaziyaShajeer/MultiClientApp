@@ -49,7 +49,7 @@ namespace SNR_ClientApp.Services
         {
 
 			ENVELOPE tallyRequest = new ENVELOPE();
-			tallyRequest= GSTLedgerGenerateXML.GstLedgerGenerateXml();
+			tallyRequest= GSTLedgerGenerateXML.GstLedgerGenerateXml(parent);
 			var stringwriter = new System.IO.StringWriter();
 			System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
 			x.Serialize(stringwriter, tallyRequest);
@@ -57,48 +57,8 @@ namespace SNR_ClientApp.Services
 			var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
 			List<GstLedgerDTO> _list = new List<GstLedgerDTO>();
 			_list =gST_LedgerParse.getAllGstLEdgers(data);
-			List<GstLedgerDTO> allGstLedgerspTally = new List<GstLedgerDTO>();
-            DataTable response = new DataTable();
-            StringBuilder Query = new StringBuilder();
-			Query.Append("SELECT $name, $parent, $TAXTYPE, $SUBTAXTYPE, $RATEOFTAXCALCULATION, $Guid, $GSTDUTYHEAD FROM "
-			  + Tables.Ledger + " WHERE $parent = '" + parent + "'");
-
-			response = await  tallyCommunicator.getdatatable(Query.ToString());
-
-
-            //StringBuilder Query2 = new StringBuilder();
-            //Query2.Append("select $name from " + Tables.Groups + " where $parent = "+parent);
-            //DataTable innergroups= tallyCommunicator.getdatatable(Query2.ToString());
-            //if(innergroups.Rows.Count > 0)
-            //{
-
-            //}
-
-            if (response.Rows.Count > 0)
-            {
-                foreach (DataRow dr in response.Rows)
-                {
-                    string taxtype = (dr["$TAXTYPE"] != DBNull.Value) ? (string)dr["$TAXTYPE"] : ""; 
-                    if (taxtype.Equals("GST", StringComparison.OrdinalIgnoreCase))
-                    {
-
-                        GstLedgerDTO dto = new GstLedgerDTO();
-
-                        dto.name = (dr["$name"] != DBNull.Value) ? (string)dr["$name"] : "";
-                        dto.accountType = GstAccountType.DUTIES_AND_TAXES;
-                        dto.taxType = (dr["$TAXTYPE"] != DBNull.Value) ? (string)dr["$TAXTYPE"] : "";
-                        dto.taxRate = (dr["$RATEOFTAXCALCULATION"] != DBNull.Value) ? StringUtilsCustom.ExtractDoubleValue(dr["$RATEOFTAXCALCULATION"].ToString()) : 0;
-                        dto.activated = false;
-                        dto.gstDutyHead = (dr["$GSTDUTYHEAD"] != DBNull.Value) ? (string)dr["$GSTDUTYHEAD"] : "";
-                        allGstLedgerspTally.Add(dto);
-
-                    }
-                }
-
-
-               
-                       }
-            return allGstLedgerspTally;
+			
+            return _list;
         }
 
         private void upload(List<GstLedgerDTO> allGstLedgerspTally)

@@ -26,8 +26,7 @@ namespace SNR_ClientApp.Parsers
 
 				tallyResponseXml = tallyResponseXml.Replace("&#13;", "")
 							   .Replace("&#10;", "")
-							   .Replace("&#4;", " ").Replace("&apos;", "'")
-							   .Replace("&", "").Replace("\u0004", "");
+							   .Replace("&#4;", " ");
 				var doc = XDocument.Parse(tallyResponseXml);
 				var ledgerList = doc.Descendants("LEDGER");
 				int ledgerCount = ledgerList.Count();

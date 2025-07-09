@@ -159,21 +159,21 @@ namespace SNR_ClientApp.Services
 
         }
 
-        internal async  Task<List<LocationDTO>> getAllGroups()
+        internal async  Task<List<string>> getAllGroups()
         {
-			ENVELOPE tallyRequest = new ENVELOPE();
-			LogManager.WriteLog("listing Groups started...");
-			tallyRequest = CompanygroupGenerateXml.getCompanyGroupsXml();
-			var stringwriter = new System.IO.StringWriter();
-			System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
-			x.Serialize(stringwriter, tallyRequest);
+            ENVELOPE tallyRequest = new ENVELOPE();
+            LogManager.WriteLog("listing Groups started...");
+            tallyRequest = CompanygroupGenerateXml.getCompanyGroupsXml();
+            var stringwriter = new System.IO.StringWriter();
+            System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
+            x.Serialize(stringwriter, tallyRequest);
 
-			var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
-			List<LocationDTO> _list = new List<LocationDTO>();
-			_list = AccountGroupResponseParser.CompanyGroupresponseParser(data);
+            var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
 
-			
-			return _list;
+            var groupnames = await AccountGroupResponseParser.CompanyGroupnameresponseParser(data);
+
+
+            return groupnames; 
         }
 		public async Task<String[]> getAllLedgersNamesByParentcess(String Parent)
 		{
@@ -245,20 +245,23 @@ namespace SNR_ClientApp.Services
 
         public async Task<String[]> getAllGroupsByParent(String parent)
         {
-            List<String> Groups = new List<string>();
-            LogManager.WriteLog("listing Groups started...");
-			string query = $"SELECT $Name FROM {Tables.Groups} WHERE $Parent = {parent}";
+            ENVELOPE tallyRequest = new ENVELOPE();
 
-			DataTable response = await tallyCommunicator.getdatatable(query);
-			if (response.Rows.Count > 0)
-            {
-                foreach (DataRow dr in response.Rows)
-                {
-                    Groups.Add(((string)dr["$name"]));
-                }
-            }
-            LogManager.WriteLog("listing Groups ended...");
-            return Groups.ToArray();
+            tallyRequest = CompanygroupGenerateXml.GroupsUnderParent(parent);
+
+
+            var stringwriter = new System.IO.StringWriter();
+            System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
+            x.Serialize(stringwriter, tallyRequest);
+
+            var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
+           List<string> Groups = await AccountGroupResponseParser.CompanyGroupnameresponseParser(data);
+            var myContent = JsonConvert.SerializeObject(Groups);
+            LogManager.WriteLog("ProductProfile");
+            LogManager.WriteLog(myContent.ToString());
+            
+
+                    return Groups.ToArray();
         }
 
        

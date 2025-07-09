@@ -1,4 +1,5 @@
-﻿using SNR_ClientApp.Properties;
+﻿using SNR_ClientApp.DTO;
+using SNR_ClientApp.Properties;
 using SNR_ClientApp.TallyResponses;
 using System;
 using System.Collections.Generic;
@@ -11,8 +12,21 @@ namespace SNR_ClientApp.Tally.generateXml
 	 public static class TaxMasterGenerateXML
 	{
 		public static ENVELOPE TaxMasterGenerateXml()
+
+
 		{
-			ENVELOPE tallyRequest = new ENVELOPE();
+			List<string> receiptUnderVoucherTypes = new List<string>(); ;
+			receiptUnderVoucherTypes.Add("Duties & Taxes");
+			receiptUnderVoucherTypes.Add("GL 13; Duties & Taxes");
+            StringBuilder voucherTypeStringBuilder = new StringBuilder();
+            string prefix = "";
+            foreach (string voucherType in receiptUnderVoucherTypes)
+            {
+                String vouchertypeNAme = prefix + " ($Parent = \"" + voucherType + "\")";
+                voucherTypeStringBuilder.Append(vouchertypeNAme);
+                prefix = "or";
+            }
+            ENVELOPE tallyRequest = new ENVELOPE();
 			HEADER header = new HEADER();
 			header.VERSION = "1";
 			header.TALLYREQUEST = "Export";
@@ -208,7 +222,7 @@ namespace SNR_ClientApp.Tally.generateXml
 			SYSTEM filter = new SYSTEM();
 			filter.NAME = "ParentFilter";
 			filter.TYPE = "Formulae";
-			filter.Text = "$Parent = \"Duties & Taxes\" OR $Parent = \"GL 13; Duties & Taxes\"";
+			filter.Text = voucherTypeStringBuilder.ToString();
 			systems.Add(filter);
 			tdlmessage.SYSTEM = systems;
 			tdl.TDLMESSAGE = tdlmessage;
