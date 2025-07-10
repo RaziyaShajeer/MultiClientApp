@@ -219,7 +219,7 @@ namespace SNR_ClientApp.Tally.generateXml
             line.ISINTERNAL = "No";
             line.XMLtag = "Groups";
             // KEY MODIFICATION: Add FIELDS property to connect fields to the line
-            line.FIELD = "Field Name Groups, Field Parent, Field Guid,Field alterid";
+            line.FIELD = "Field Name Groups";
             List<LINE> lines = new List<LINE>();
             lines.Add(line);
             tdlmessage.LINE = lines;

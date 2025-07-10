@@ -5,8 +5,11 @@ using SNR_ClientApp.Config;
 using SNR_ClientApp.DTO;
 using SNR_ClientApp.Enums;
 using SNR_ClientApp.Exceptions;
+using SNR_ClientApp.Parsers;
 using SNR_ClientApp.Properties;
 using SNR_ClientApp.Services;
+using SNR_ClientApp.Tally.generateXml;
+using SNR_ClientApp.Tally;
 using SNR_ClientApp.TallyResponses;
 using SNR_ClientApp.Utils;
 using System;
@@ -33,16 +36,19 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
         //Dictionary<string, Object> props = new Dictionary<string, Object>();
         HttpClient httpClient;
         private Lazy<Dictionary<string, object>> lazyProps = new Lazy<Dictionary<string, object>>(() => ApplicationProperties.getAllProperties(StringUtilsCustom.TALLY_COMPANY));
-
-        // Property to access the lazy-loaded dictionary
-        public Dictionary<string, object> props => lazyProps.Value;
-
-        public TallyProperties2_UC()
+        TallyCommunicator tallyCommunicator;
+		CashReciptVoucherTypeParser cashReciptVoucherTypeParser = new CashReciptVoucherTypeParser();
+		// Property to access the lazy-loaded dictionary
+		public Dictionary<string, object> props => lazyProps.Value;
+        LedgerNameUnderParentParser ledgerNameUnderParentParser = new LedgerNameUnderParentParser();
+		public TallyProperties2_UC()
         {
+            tallyCommunicator=new TallyCommunicator();  
             InitializeComponent();
             tallyService = new TallyService();
             LoadDefaultValues();
             httpClient=new HttpClient();
+          
 
         }
 
@@ -133,6 +139,7 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
         private async  void loadBankNames()
         {
             var Parent = "Bank Accounts";
+
             String[] row = await tallyService.getAllLedgersByParent(Parent);
             //var Parent = "Bank Accounts";
             string[] groups = await tallyService.getAllGroupsByParent(Parent);
@@ -242,9 +249,19 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
         }
         private async void loadReceiptVoucherTypes()
         {
+			ENVELOPE tallyRequest = new ENVELOPE();
+			LogManager.WriteLog("listing Cash Receipt Voucher Types started...");
+            
+			tallyRequest = CashRecieptVocherTypeGenerateXML.getAllReciptVoucherTypeGenerateXml("Receipt");
+			var stringwriter = new System.IO.StringWriter();
+			System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
+			x.Serialize(stringwriter, tallyRequest);
 
-            var vtypes = await tallyService.getAllCashReceiptVoucherTypes();
-            List<String> types = new List<String>();
+			var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
+
+			var vtypes = await cashReciptVoucherTypeParser.getAllReciptVochertypeParser(data);
+			LogManager.WriteLog("listing Cash Receipt Voucher Types ended...");
+			List<String> types = new List<String>();
             types.AddRange(vtypes);
             types.Add("Journal");
             String[] row = types.ToArray();

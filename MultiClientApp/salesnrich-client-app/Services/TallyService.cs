@@ -31,8 +31,12 @@ namespace SNR_ClientApp.Services
 		public OdbcConnection con;
 		public static Dictionary<string, string> props = new Dictionary<string, string>();
         TallyCommunicator tallyCommunicator = new TallyCommunicator();
-
-        public Boolean Connect(String host, String port,String odbcDsn = "")
+        LedgerNameUnderParentParser ledgerNameUnderParentParser= new LedgerNameUnderParentParser();
+        CashReciptVoucherTypeParser cashReciptVoucherTypeParser = new CashReciptVoucherTypeParser();
+		GodownGenerateXMl godownGenerateXMl = new GodownGenerateXMl();
+        LedgerNameUnderParentParser LedgerNameUnderParentParser = new LedgerNameUnderParentParser();
+		GoDownNameParser GoDownNameParser = new GoDownNameParser();
+		public Boolean Connect(String host, String port,String odbcDsn = "")
         {
             try
             {
@@ -176,49 +180,36 @@ namespace SNR_ClientApp.Services
             return groupnames; 
         }
 		public async Task<String[]> getAllLedgersNamesByParentcess(String Parent)
+
 		{
-			List<String> Groups = new List<string>();
+			ENVELOPE tallyRequest = new ENVELOPE();
+			LogManager.WriteLog("listing Groups started...");
+			tallyRequest = GSTLedgerGenerateXML.GstLedgerGenerateXml(Parent);
+			var stringwriter = new System.IO.StringWriter();
+			System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
+			x.Serialize(stringwriter, tallyRequest);
 
-			DataTable response = new DataTable();
-			StringBuilder Query = new StringBuilder();
+			var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
 
-			string query = $"SELECT $Name FROM {Tables.Ledger} WHERE $Parent = '{Parent}' OR $Parent = 'GL 13; Duties & Taxes'";
-			Query.Append(query);
-			response = await tallyCommunicator.getdatatable(Query.ToString());
-
-			if (response.Rows.Count > 0)
-			{
-
-				foreach (DataRow dr in response.Rows)
-				{
-					Groups.Add(((string)dr["$name"]));
-				}
-
-			}
+			var Groups = await ledgerNameUnderParentParser.allLedgersUnderParent(data);
+			
 			return Groups.ToArray();
 		}
 
 		public async Task<String[]> getAllLedgersNamesByParent(String Parent)
         {
-            List<String> Groups = new List<string>();
-            ApplicationProperties.getAllProperties(StringUtilsCustom.TALLY_COMPANY);
-				
-            DataTable response = new DataTable();
-            StringBuilder Query = new StringBuilder();
+          
+			ENVELOPE tallyRequest = new ENVELOPE();
+			LogManager.WriteLog("listing Groups started...");
+			tallyRequest = GSTLedgerGenerateXML.GstLedgerGenerateXml(Parent);
+			var stringwriter = new System.IO.StringWriter();
+			System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
+			x.Serialize(stringwriter, tallyRequest);
 
-			string query = $"SELECT $Name FROM {Tables.Ledger} WHERE $Parent = '{Parent}' OR $Parent = 'GL 13; Duties & Taxes'";
-			Query.Append(query);
-			response = await tallyCommunicator.getdatatable(Query.ToString());
+			var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
 
-            if (response.Rows.Count > 0)
-            {
-
-                foreach (DataRow dr in response.Rows)
-                {
-                    Groups.Add(((string)dr["$name"]));
-                }
-
-            }
+			var Groups = await ledgerNameUnderParentParser.allLedgersUnderParent(data);
+			
             return Groups.ToArray();
         }
 
@@ -265,93 +256,81 @@ namespace SNR_ClientApp.Services
         }
 
        
-        internal async Task<string[]> getAllCashReceiptVoucherTypes()
-        {
-
-            List<String> voucherTypes = new List<string>();
-            LogManager.WriteLog("listing Cash Receipt Voucher Types started...");
-            // Tables.CAVoucherType  replaced with Tables.VoucherType
-            DataTable response = await tallyCommunicator.getdatatable("SELECT $Name FROM " + Tables.VoucherType +" where $parent = Receipt");
-            if (response.Rows.Count > 0)
-            {
-                foreach (DataRow dr in response.Rows)
-                {
-                    voucherTypes.Add(((string)dr["$name"]));
-                }
-            }
-            LogManager.WriteLog("listing Cash Receipt Voucher Types ended...");
-            return voucherTypes.ToArray();
-
-        }
+        
         internal async Task<string[]> getAllSalesReturnVoucherTypes()
         {
+			ENVELOPE tallyRequest = new ENVELOPE();
+			LogManager.WriteLog("listing  Cash Sales Return Voucher Types started...");
 
-            List<String> voucherTypes = new List<string>();
-            LogManager.WriteLog("listing Cash Sales Return Voucher Types started...");
-            // Tables.CAVoucherType  replaced with Tables.VoucherType
-            DataTable response = await tallyCommunicator.getdatatable("SELECT $Name FROM " + Tables.VoucherType +" where $parent = Credit Note");
-            if (response.Rows.Count > 0)
-            {
-                foreach (DataRow dr in response.Rows)
-                {
-                    voucherTypes.Add(((string)dr["$name"]));
-                }
-            }
-            LogManager.WriteLog("listing Cash Receipt Voucher Types ended...");
+			tallyRequest = CashRecieptVocherTypeGenerateXML.getAllReciptVoucherTypeGenerateXml("Credit Note");
+			var stringwriter = new System.IO.StringWriter();
+			System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
+			x.Serialize(stringwriter, tallyRequest);
+
+			var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
+
+			var voucherTypes = await cashReciptVoucherTypeParser.getAllReciptVochertypeParser(data);
+			LogManager.WriteLog("listing Cash Receipt Voucher Types ended...");
+		
             return voucherTypes.ToArray();
 
         }
         internal async Task<string[]> getAllSalesReturnLedgerNames()
         {
+			ENVELOPE tallyRequest = new ENVELOPE();
+			tallyRequest = LedgerunderParentxml.LedgerUnderParentGenerateXML("Sales Accounts");
+			var stringwriter = new System.IO.StringWriter();
+			System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
+			x.Serialize(stringwriter, tallyRequest);
 
-            List<String> ledgerNames = new List<string>();
-            LogManager.WriteLog("listing Cash Sales Return Ledger Names started...");
-            // Tables.CAVoucherType  replaced with Tables.VoucherType
-            DataTable response = await tallyCommunicator.getdatatable("SELECT $Name FROM " + Tables.Ledger +" where $parent = Sales Accounts");
-            if (response.Rows.Count > 0)
-            {
-                foreach (DataRow dr in response.Rows)
-                {
-                    ledgerNames.Add(((string)dr["$name"]));
-                }
-            }
-            LogManager.WriteLog("listing Cash Receipt Voucher Types ended...");
+
+			var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
+			LogManager.WriteLog("listing  Sales Return Ledger Names from tally started...");
+
+			List<string> ledgerNames = await ledgerNameUnderParentParser.allLedgersUnderParent(data);
+			LogManager.WriteLog("listing Sales Return Ledger Names from tally  ended...");
+			
             return ledgerNames.ToArray();
 
         }
         public async Task<string[]> getAllLedgersByParent(string parent="")
         {
-            //if (string.IsNullOrEmpty(parent))
-            //    parent="Bank Accounts";
-            List<String> BankNames = new List<string>();
-            LogManager.WriteLog($"listing  Ledger under {parent} Group from tally started...");
-            DataTable response = await tallyCommunicator.getdatatable("SELECT $Name FROM " + Tables.Ledger + " where $parent = "+parent);
+			//if (string.IsNullOrEmpty(parent))
+			ENVELOPE tallyRequest = new ENVELOPE();
 
-            
-            if (response.Rows.Count > 0)
-            {
-                foreach (DataRow dr in response.Rows)
-                {
-                    BankNames.Add(((string)dr["$name"]));
-                }
-            }
-            LogManager.WriteLog("listing Cash Receipt Voucher Types ended...");
+			tallyRequest = LedgerunderParentxml.LedgerUnderParentGenerateXML(parent);
+
+
+			var stringwriter = new System.IO.StringWriter();
+			System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
+			x.Serialize(stringwriter, tallyRequest);
+
+			var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
+			List<string> BankNames = await ledgerNameUnderParentParser.allLedgersUnderParent(data);
+			//    parent="Bank Accounts";
+		
+
+			//List<String> BankNames = new List<string>();
+         LogManager.WriteLog("listing Cash Receipt Voucher Types ended...");
             return BankNames.ToArray();
         }
 
         public async Task<string[]> getAllIndirectIncomes()
         {
-            List<String> datas = new List<string>();
-            LogManager.WriteLog("listing IndirectIncomes Ledger from tally started...");
-            DataTable response = await tallyCommunicator.getdatatable("SELECT $Name FROM " + Tables.Ledger + " where $parent = Indirect Incomes ");
+			ENVELOPE tallyRequest = new ENVELOPE();
 
-			if (response.Rows.Count > 0)
-            {
-                foreach (DataRow dr in response.Rows)
-                {
-                    datas.Add(((string)dr["$name"]));
-                }
-            }
+			tallyRequest = LedgerunderParentxml.LedgerUnderParentGenerateXML("Indirect Incomes");
+
+
+			var stringwriter = new System.IO.StringWriter();
+			System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
+			x.Serialize(stringwriter, tallyRequest);
+
+
+			var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
+			LogManager.WriteLog("listing IndirectIncomes Ledger from tally started...");
+			List<string> datas = await ledgerNameUnderParentParser.allLedgersUnderParent(data);
+
             LogManager.WriteLog("listing IndirectIncomes ended...");
             return datas.ToArray();
         }
@@ -359,35 +338,40 @@ namespace SNR_ClientApp.Services
         public async Task<string[]> getAllIndirectExpences()
         
                                     {
-            List<String> datas = new List<string>();
-            LogManager.WriteLog("listing Indirect Expences Ledger from tally started...");
-            var query = $"SELECT $Name FROM {Tables.Ledger} WHERE $Parent = 'Indirect Expenses' OR $Parent = 'GL 34; Business Promition Expenses'";
+			ENVELOPE tallyRequest = new ENVELOPE();
+            tallyRequest = LedgerunderParentxml.LedgerUnderParentGenerateXML("Indirect Expenses");
+			var stringwriter = new System.IO.StringWriter();
+			System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
+			x.Serialize(stringwriter, tallyRequest);
 
-			DataTable response = await tallyCommunicator.getdatatable(query.ToString());
 
-			if (response.Rows.Count > 0)
-            {
-                foreach (DataRow dr in response.Rows)
-                {
-                    datas.Add(((string)dr["$name"]));
-                }
-            }
+			var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
+			LogManager.WriteLog("listing Indirect Expences Ledger from tally started...");
+			List<string> datas = await ledgerNameUnderParentParser.allLedgersUnderParent(data);
+			
+            
+            
             LogManager.WriteLog("listing Indirect Expences ended...");
             return datas.ToArray();
         }
 
         internal async Task<string[]> getAllGodowns()
+
         {
-            List<String> datas = new List<string>();
-            LogManager.WriteLog("listing Godown Names from tally started...");
-            DataTable response = await tallyCommunicator.getdatatable("SELECT $Name FROM " + Tables.Godown );
-            if (response.Rows.Count > 0)
-            {
-                foreach (DataRow dr in response.Rows)
-                {
-                    datas.Add(((string)dr["$name"]));
-                }
-            }
+			ENVELOPE tallyRequest = new ENVELOPE();
+
+			tallyRequest = godownGenerateXMl.GetGodownGenerateXml();
+
+			var stringwriter = new System.IO.StringWriter();
+			System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
+			x.Serialize(stringwriter, tallyRequest);
+
+
+			var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
+			LogManager.WriteLog("listing Godown Names from tally started...");
+			List<string> datas = await GoDownNameParser.getAllGodownNames(data);
+
+			
             LogManager.WriteLog("listing Godown Names from tally ended...");
             return datas.ToArray();
         }

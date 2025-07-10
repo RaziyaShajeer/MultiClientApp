@@ -112,7 +112,7 @@ namespace SNR_ClientApp.Parsers
 
 				string name = node["NAME"]?.InnerText ?? "";
 				name = Regex.Replace(name, pattern, "").Trim();
-				//name = CleanEncodingIssues(name);
+				name = CleanEncodingIssues(name);
 				groupnames.Add(name);
 			}
 			return Task.FromResult(groupnames);
