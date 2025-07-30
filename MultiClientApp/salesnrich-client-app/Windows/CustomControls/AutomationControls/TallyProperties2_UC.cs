@@ -140,12 +140,12 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
         {
             var Parent = "Bank Accounts";
 
-            String[] row = await tallyService.getAllLedgersByParent(Parent);
+            String[] row = await tallyService.getAllLedgersByParentBank(Parent);
             //var Parent = "Bank Accounts";
             string[] groups = await tallyService.getAllGroupsByParent(Parent);
             foreach (string group in groups)
             {
-                var res = await tallyService.getAllLedgersByParent(group);
+                var res = await tallyService.getAllLedgersByParentgroup(group);
                 //row.Append(res);
                 row = row.Concat(res).ToArray();
             }
@@ -375,7 +375,7 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
             string[] groups = await tallyService.getAllGroupsByParent("Indirect Expenses");
             foreach (string group in groups)
             {
-                var res = await tallyService.getAllLedgersByParent(group);
+                var res = await tallyService.getAllLedgersByParentgroup(group);
                 //row.Append(res);
                 IndirectExpencesList = IndirectExpencesList.Concat(res).ToArray();
             }
@@ -388,9 +388,11 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
 			try
 			{
                 var tallyCompanyName = props["tally.company"].ToString();
+                var oldCompanyName = TallyUpdateform.oldCompanyname;
+               
 				//var myContent = JsonConvert.SerializeObject(tallyCompanyName);
 				HttpContent content = new StringContent(tallyCompanyName, Encoding.UTF8, "application/json");
-				string SaveTallyCompany = ApiConstants.SaveCompany + "?companyName=" + tallyCompanyName;
+				string SaveTallyCompany = ApiConstants.SaveCompany + "?companyName=" + tallyCompanyName+ "&oldCompanyName=" + oldCompanyName; 
 				
 
 				httpClient = RestClientUtil.getClient();
@@ -430,7 +432,7 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
                 sendPropertiesToAdmin();
 
                 
-                sendPropertiestoServer();
+              //  sendPropertiestoServer();
                 sendTallyCompanyName();
 				TallyConfigForm.isSettings = false;
 				//var	resWriter = new ResXResourceWriter("ClientAppProps1.resx");
@@ -477,7 +479,9 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
 
         private void generateXmlFile()
         {
-            string filename = "PropertyFile-"+DateTime.Now.ToString("dd-MMM-yyyy-HH-mm")+".xlsx";
+
+
+			string filename = "PropertyFile-"+DateTime.Now.ToString("dd-MMM-yyyy-HH-mm")+".xlsx";
 
             GenerateExcelFile(ApplicationProperties.properties, filename);
             sendEmail(filename);

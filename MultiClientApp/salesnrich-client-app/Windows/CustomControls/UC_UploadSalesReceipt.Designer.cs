@@ -188,6 +188,7 @@
 			companySelect.Name = "companySelect";
 			companySelect.Size = new Size(215, 23);
 			companySelect.TabIndex = 0;
+			companySelect.SelectedIndexChanged += companySelect_SelectedIndexChanged;
 			// 
 			// pictureBox1
 			// 
@@ -210,6 +211,7 @@
 			Controls.Add(MainPanel1);
 			Name = "UC_UploadSalesReceipt";
 			Size = new Size(800, 575);
+			Load += UC_UploadSalesReceipt_Load;
 			MainPanel1.ResumeLayout(false);
 			MainPanel1.PerformLayout();
 			flowLayoutPanel1.ResumeLayout(false);

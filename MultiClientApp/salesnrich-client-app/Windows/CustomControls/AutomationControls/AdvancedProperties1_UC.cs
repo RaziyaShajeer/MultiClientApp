@@ -92,7 +92,7 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
                 {
                     txt_Batch.Enabled = true;
                     lbl_BatchName.Enabled = true;
-                    txt_Batch.Text = batchName.ToString();
+                    txt_Batch.Text = "&#4; Any";
                 }
                 if (godownName != "")
                 {
@@ -166,7 +166,9 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
             ApplicationProperties.properties["netStockAvilable"] = chk_NetStockAvailable.Checked.ToString();
             if (chk_batch.Checked)
             {
-                ApplicationProperties.properties["batchName"] = txt_Batch.Text;
+                ApplicationProperties.properties["batch.fixed"] = true;
+
+				ApplicationProperties.properties["batchName"] = txt_Batch.Text;
             }
             else
             {
@@ -174,7 +176,10 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
             }
             if (chk_Godown.Checked)
             {
-                ApplicationProperties.properties["godownName"] = GodownSelect.SelectedItem.ToString();
+                ApplicationProperties.properties["godown.fixed"] = true;
+
+
+				ApplicationProperties.properties["godownName"] = GodownSelect.SelectedItem.ToString();
             }
             else
             {

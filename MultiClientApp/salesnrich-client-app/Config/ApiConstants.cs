@@ -24,7 +24,7 @@ namespace SNR_ClientApp.Config
 	public static readonly String STOCK_ITEM = "/product-profileMultiCompany.json";
 	public static readonly String PRICE_LEVEL = "/price-levels-multi-company.json";
 	public static readonly String PRICE_LIST_LEVEL_LIST = "/price-level-list.json";
-	public static readonly String OPENING_STOCK_MULTI ="/opening-stockMultiCompany.json";
+	public static readonly String OPENING_STOCK_MULTI = "/opening-stockMultiCompany.json";
 	public static readonly String TEMPORARY_OPENING_STOCK = "/temporary-opening-stock.json";
 	public static readonly String STOCK_LOCATION = "/stock-locations-MultiCompany.json";
 	public static readonly String PRODUCTGROUP_PRODUCTPROFILE = "/product-group_product-profile.json";

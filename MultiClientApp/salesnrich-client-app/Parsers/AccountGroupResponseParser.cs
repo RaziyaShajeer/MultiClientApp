@@ -20,8 +20,12 @@ namespace SNR_ClientApp.Parsers
 
 		{
 			List<LocationDTO> locationDtos = new List<LocationDTO>();
+			
 			//tallyResponseXml = tallyResponseXml.Replace("\u0004","");
-			tallyResponseXml = tallyResponseXml.Replace("&#4;", " ");
+			tallyResponseXml = tallyResponseXml.Replace("&#13;", "")
+						   .Replace("&#10;", "")
+						   .Replace("&#4;", " ")
+						 ;
 
 
 
@@ -47,9 +51,9 @@ namespace SNR_ClientApp.Parsers
 				string locationId = node["GUID"]?.InnerText?.Trim() ?? "";
 				string discription = node["PARENT"]?.InnerText ?? "";
 				//discription = CleanEncodingIssues(discription);
-				string alterIdStr = node["ALTERID"]?.InnerText?.Trim() ?? "0";
-				double alterId = double.TryParse(alterIdStr, out double tempAlterId) ? tempAlterId : 0.0;
-
+				double alterId = StringUtilsCustom.ExtractDoubleValue(node["ALTERID"]?.InnerText?.Trim() ?? "0");
+				
+			
 				LocationDTO dto = new LocationDTO
 				{
 					locationId = locationId,
@@ -57,6 +61,7 @@ namespace SNR_ClientApp.Parsers
 					description = discription, // Assuming no tax rate in XML, default to 0
 					alterId = Convert.ToInt64(alterId)
 				};
+
 
 				locationDtos.Add(dto);
 			}
@@ -77,15 +82,7 @@ namespace SNR_ClientApp.Parsers
 				.Replace("?", "")
 				
 				.Trim();
-		}
-		public static string RemoveInvalidCharacters(string text)
-		{
-			if (string.IsNullOrEmpty(text))
-				return text;
 
-			return new string(text
-				.Where(c => c != '\uFFFD' && !char.IsControl(c)) // Remove replacement character and control characters
-				.ToArray());
 		}
 		public static Task<List<string>> CompanyGroupnameresponseParser(string tallyResponseXml)
 		{
@@ -95,11 +92,11 @@ namespace SNR_ClientApp.Parsers
 
 
 
-            
-           
-           
 
-            XmlDocument doc = new XmlDocument();
+
+
+
+			XmlDocument doc = new XmlDocument();
 
 			doc.LoadXml(tallyResponseXml);
 
@@ -111,9 +108,88 @@ namespace SNR_ClientApp.Parsers
 
 
 				string name = node["NAME"]?.InnerText ?? "";
+				string discription = node["PARENT"]?.InnerText ?? "";
 				name = Regex.Replace(name, pattern, "").Trim();
 				name = CleanEncodingIssues(name);
-				groupnames.Add(name);
+				if(!string.IsNullOrEmpty(name))
+				{
+					groupnames.Add(name);
+				}
+
+
+
+			}
+			return Task.FromResult(groupnames);
+
+		}
+
+		//public static Task<List<string>> CompanyGroupnameresponseParser(string tallyResponseXml)
+		//{
+		//	List<string> groupnames = new List<string>();
+		//	//tallyResponseXml = tallyResponseXml.Replace("\u0004","");
+		//	tallyResponseXml = tallyResponseXml.Replace("&#4;", " ");
+
+
+
+            
+           
+           
+
+  //          XmlDocument doc = new XmlDocument();
+
+		//	doc.LoadXml(tallyResponseXml);
+
+		//	XmlNodeList GroupNodes = doc.GetElementsByTagName("GROUPS");
+		//	foreach (XmlNode node in GroupNodes)
+		//	{
+		//		string pattern = @"(&#13;&#10;|&#13;|&#10;|[\r\n\t])+";
+
+
+
+		//		string name = node["NAME"]?.InnerText ?? "";
+		//		string discription = node["PARENT"]?.InnerText ?? "";
+		//		name = Regex.Replace(name, pattern, "").Trim();
+		//		name = CleanEncodingIssues(name);
+				
+		//			groupnames.Add(name);
+				
+			
+		//	}
+		//	return Task.FromResult(groupnames);
+
+		//}
+		public static Task<List<string>> groupsunderCurrentassetsresponseParser(string tallyResponseXml)
+		{
+			List<string> groupnames = new List<string>();
+			//tallyResponseXml = tallyResponseXml.Replace("\u0004","");
+			tallyResponseXml = tallyResponseXml.Replace("&#4;", " ");
+
+
+
+
+
+
+
+			XmlDocument doc = new XmlDocument();
+
+			doc.LoadXml(tallyResponseXml);
+
+			XmlNodeList GroupNodes = doc.GetElementsByTagName("GROUPS");
+			foreach (XmlNode node in GroupNodes)
+			{
+				string pattern = @"(&#13;&#10;|&#13;|&#10;|[\r\n\t])+";
+
+
+
+				string name = node["NAME"]?.InnerText ?? "";
+				string discription = node["PARENT"]?.InnerText ?? "";
+				name = Regex.Replace(name, pattern, "").Trim();
+				name = CleanEncodingIssues(name);
+				if (!string.IsNullOrEmpty(name))
+				{
+					groupnames.Add(name);
+				}
+
 			}
 			return Task.FromResult(groupnames);
 

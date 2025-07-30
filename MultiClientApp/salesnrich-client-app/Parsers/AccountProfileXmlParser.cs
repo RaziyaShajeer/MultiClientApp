@@ -30,11 +30,11 @@ namespace SNR_ClientApp.Parsers
 			{
 				List<AccountProfileDTO> duplicatelist = new List<AccountProfileDTO>();
 
-		
+
 				tallyResponseXml = tallyResponseXml.Replace("&#13;", "")
-							   .Replace("&#10;", "")
-							   .Replace("&#4;", " ").Replace("&apos;","'")
-							   .Replace("&", "").Replace("\u0004","");
+							 .Replace("&#10;", "")
+							 .Replace("&#4;", "");
+
 				var doc = XDocument.Parse(tallyResponseXml);
 				var ledgerList = doc.Descendants("LEDGER");
 				int ledgerCount = ledgerList.Count();
@@ -47,33 +47,45 @@ namespace SNR_ClientApp.Parsers
 				foreach (var node in ledgerList)
 				{
 					AccountProfileDTO accountProfileDTO = new AccountProfileDTO();
-					accountProfileDTO.customerId = node.Element("GUID")?.Value ?? "";
-					accountProfileDTO.name = node.Attribute("NAME")?.Value ?? "";
-					accountProfileDTO.name = accountProfileDTO.name.Replace("&#13;&#10;", "")
-											   .Replace("#13;#10;", "")
-											   .Replace("&#13;", "")
-											   .Replace("#13;", "")
-											   .Replace("&#10;", "")
-											   .Replace("#10;", "");
-
-					string pattern = @"(&#13;&#10;|&#13;|&#10;|[\r\n\t])+";
-					accountProfileDTO.name = Regex.Replace(accountProfileDTO.name, pattern, "").Trim();
-
-
 					
 
+					accountProfileDTO.customerId = node.Element("GUID")?.Value ?? "";
+				if(!string.IsNullOrEmpty(accountProfileDTO.customerId))
+					{
+						accountProfileDTO.customerId = accountProfileDTO.customerId.Replace("\\s", "");
+					}
+				
+					accountProfileDTO.name = node.Attribute("NAME")?.Value ?? "";
+
+
+					//string pattern = @"(&#13;&#10;|&#13;|&#10;|[\r\n\t])+";
 					if (accountProfileDTO.name.EndsWith("\r\n"))
 					{
 						accountProfileDTO.name = accountProfileDTO.name.Replace("\r\n", "");
 						accountProfileDTO.trimChar = "#13;#10;";
 					}
-					
+
+					// 13/10/2023
+					// todo : need to verify with download order
+					string pattern = @"[\r\n\t]+$";
 					string result = Regex.Replace(accountProfileDTO.name, pattern, "");
 
-					
 					accountProfileDTO.name = result;
+
+
+				
 					LogManager.WriteLog(accountProfileDTO.name.ToString());
-					accountProfileDTO.mailingName = node.Element("MAILINGNAME")?.Value ?? "";
+					
+					var mailingNameList = node.Element("MAILINGNAME.LIST")?.Elements("MAILINGNAME").ToList();
+					if (mailingNameList != null && mailingNameList.Any())
+					{
+						accountProfileDTO.mailingName = string.Join("~", mailingNameList.Select(a => a.Value.Trim()));
+					}
+					else
+					{
+						accountProfileDTO.mailingName = "";
+					}
+						
 					if (accountProfileDTO.mailingName.EndsWith("\r\n"))
 					{
 						accountProfileDTO.mailingName = accountProfileDTO.mailingName.Replace("\r\n", "");
@@ -85,23 +97,37 @@ namespace SNR_ClientApp.Parsers
 					string alterIdStr = node.Element("ALTERID")?.Value ?? "";
 					double alterId = double.TryParse(alterIdStr, out double tempAlterId) ? tempAlterId : 0.0;
 					accountProfileDTO.alterId = Convert.ToInt64(alterId);
-				
-					accountProfileDTO.address = node.Element("_ADDRESS1")?.Value ?? "No Adddress";
 
-					accountProfileDTO.address += string.IsNullOrWhiteSpace(node.Element("_ADDRESS2")?.Value) ? "" : "~" + node.Element("_ADDRESS2")?.Value;
-					
+					var addressList = node.Element("ADDRESS.LIST")?.Elements("ADDRESS").ToList();
+					if (addressList != null && addressList.Any())
+					{
+						// Join all address lines with "~" separator
+						accountProfileDTO.address = string.Join("~", addressList.Select(a => a.Value.Trim()));
+					}
+					else
+					{
+						accountProfileDTO.address = "No Address";
+					}
+					//accountProfileDTO.address = node.Element("_ADDRESS1")?.Value ?? "No Adddress";
+
+					//accountProfileDTO.address += string.IsNullOrWhiteSpace(node.Element("_ADDRESS2")?.Value) ? "" : "~" + node.Element("_ADDRESS2")?.Value;
+
 					accountProfileDTO.defaultPriceLevelName = node.Element("PARENT")?.Value ?? "";
 					accountProfileDTO.accountTypeName = node.Element("TAXTYPE")?.Value ?? "";
 					accountProfileDTO.phone1 = node.Element("LEDGERMOBILE")?.Value ?? "";
 					var phone = accountProfileDTO.phone1.Split(",");
 					accountProfileDTO.phone1 = phone[0];
-				
+					accountProfileDTO.defaultPriceLevelName= node.Element("PRICELEVEL")?.Value ?? "";
 					accountProfileDTO.stateName = node.Element("LEDSTATENAME")?.Value ?? "";
 					accountProfileDTO.countryName = node.Element("COUNTRYOFRESIDENCE")?.Value??"";
-					accountProfileDTO.gstRegistrationType = node.Element("GSTREGISTRATIONTYPE")?.Value ?? "";
+					accountProfileDTO.gstRegistrationType = node.Element("GSTREGISTRATIONTYPE")?.Value ?? "Regular";
 					accountProfileDTO.tinNo = node.Element("PARTYGSTIN")?.Value ?? "";
 					
 					accountProfileDTO.pin = node.Element("PINCODE")?.Value?.Trim() ?? "";
+					if(!string.IsNullOrEmpty(accountProfileDTO.pid))
+					{
+						accountProfileDTO.pin = accountProfileDTO.pin.Replace("\\s", "");
+					}
 					var cityValue = node.Element("HASEDDCITY")?.Value?.Trim();
 					accountProfileDTO.city = string.IsNullOrWhiteSpace(cityValue) ? "No City" : cityValue;
 

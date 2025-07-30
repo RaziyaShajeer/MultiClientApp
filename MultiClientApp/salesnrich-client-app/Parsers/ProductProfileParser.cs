@@ -13,9 +13,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Security.AccessControl;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Xml;
 using System.Xml.Linq;
 using ProductProfileDTO = SNR_ClientApp.DTO.ProductProfileDTO;
 
@@ -29,31 +31,45 @@ namespace SNR_ClientApp.Parsers
         private String ProductCessName = ApplicationProperties.properties.GetValueOrDefault("tally.productCESS").ToString();
 
         public async Task<List<ProductProfileDTO>> getProductprofiles(string tallyResponseXml)
-        {
-            try
+		{
+			try
             {
-                List<ProductProfileTaxMasterDTO> uploadPPTaxToServer = new List<ProductProfileTaxMasterDTO>();
-                List<ProductProfileDTO> duplicateProductslist = new List<ProductProfileDTO>();
-                List<ProductProfileDTO> _list = new List<ProductProfileDTO>();
-                string pattern = @"[\r\n\t]+$";
-                var gstItems = GSTNames.Split(",");
-                if (string.IsNullOrEmpty(GSTNames))
-                {
-                    gstItems = null;
-                }
-                List<ProductProfileDTO> allproductprofiles = new List<ProductProfileDTO>();
+
+
+
                 tallyResponseXml = tallyResponseXml.Replace("&#13;", "")
-                                   .Replace("&#10;", "")
-                                   .Replace("&#4;", "").Replace("&apos;", "'")
-                                   .Replace("&", "").Replace("\u0004", "");
+                               .Replace("&#10;", "")
+                               .Replace("&#4;", "");
+                            
                 var doc = XDocument.Parse(tallyResponseXml);
-                var productprofilelist = doc.Descendants("STOCKITEM");
-                int ledgerCount = productprofilelist.Count();
-                foreach (var productprofile in productprofilelist)
+				var productprofilelist = doc.Descendants("STOCKITEM");
+				int ledgerCount = productprofilelist.Count();
+			
+                // Use XDocument to parse the cleaned XML
+             
+
+				List<ProductProfileTaxMasterDTO> uploadPPTaxToServer = new List<ProductProfileTaxMasterDTO>();
+				List<ProductProfileDTO> duplicateProductslist = new List<ProductProfileDTO>();
+				List<ProductProfileDTO> _list = new List<ProductProfileDTO>();
+
+				string pattern = @"[\r\n\t]+$";
+
+				string[] gstItems = null;
+				if (!string.IsNullOrEmpty(GSTNames))
+				{
+					gstItems = GSTNames.Split(",");
+				}
+
+				List<ProductProfileDTO> allproductprofiles = new List<ProductProfileDTO>();
+
+		
+				
+				foreach (var productprofile in productprofilelist)
                 {
+                    LogManager.WriteLog("P1ABC"+productprofile.Name.ToString());
                     List<TaxMasterDTO> masterDTOs = new List<TaxMasterDTO>();
                     ProductProfileDTO productProfileDTO = new ProductProfileDTO();
-
+              
                     productProfileDTO.productId = productprofile.Element("GUID")?.Value ?? "";
                     productProfileDTO.activated = true;
                     productProfileDTO.description = productprofile.Element("PARENT")?.Value ?? "";
@@ -91,58 +107,25 @@ namespace SNR_ClientApp.Parsers
                     productProfileDTO.alterId = Double.Parse(alterId);
                     string mrp = productprofile.Element("RATEOFMRP")?.Value ?? "0";
                     productProfileDTO.mrp = double.Parse(mrp);
-                    string lastsellingPrice = productprofile.Element("_LASTSALEPRICE")?.Value ?? "0";
-                    if(lastsellingPrice=="")
-                    {
-                        lastsellingPrice = "0";
-                    }
-                    productProfileDTO.price = double.Parse(lastsellingPrice);
-                    LogManager.WriteLog(productProfileDTO.price.ToString());
-                    string price =( productprofile.Element("STANDARDPRICE")?.Value) ?? lastsellingPrice;
-                    if (string.IsNullOrWhiteSpace(price))
-                    {
-                        price = "0";
-                    }
-                    else
-                    {
-                        // Extract numeric part (e.g., 139.56 from "139.56/Nos.")
-                        var match = Regex.Match(price, @"[\d.]+");
-                        if (match.Success)
-                        {
-                            price = match.Value;
-                        }
-                        else
-                        {
-                            price = "0";
-                        }
-                    }
+					productProfileDTO.price = StringUtilsCustom.ExtractDoubleValue(productprofile.Element("_LASTSALEPRICE")?.Value ?? "0");
+					
 
-                    LogManager.WriteLog(price);
+					productProfileDTO.price=StringUtilsCustom.ExtractDoubleValue(productprofile.Element("STANDARDPRICE")?.Value ?? "0");
 
-                    productProfileDTO.price = double.Parse(price);
-                    LogManager.WriteLog(price);
-                    productProfileDTO.price = double.Parse(price);
 
-                    string integratedTax = productprofile.Element("_INTEGRATEDTAX")?.Value ?? "0";
-
-                    productProfileDTO.taxRate = Double.Parse(integratedTax);
-                    if (productProfileDTO.taxRate == 0)
-                    {
-                        string taxrate = productprofile.Element("RATEOFVAT")?.Value ?? "0";
-
-                        productProfileDTO.taxRate = double.Parse(taxrate);
-
-                    }
+					productProfileDTO.taxRate=StringUtilsCustom.ExtractDoubleValue(productprofile.Element("_INTEGRATEDTAX")?.Value ?? "0");
+			
                     productProfileDTO.productCategoryName = productprofile.Element("CATEGORY")?.Value ?? "";
                     productProfileDTO.hsnCode = productprofile.Element("_HSNCODE")?.Value ?? "0";
                     productProfileDTO.barcode = productprofile.Element("PARTNUMBER")?.Value ?? "0";
                     productProfileDTO.barcode = productprofile.Element("PARTNUMBER")?.Value ?? "0";
                     productProfileDTO.remarks = productprofile.Element("NARRATION")?.Value ?? "";
-                    string unitQty = productprofile.Element("CONVERSION")?.Value ?? "1";
-                    productProfileDTO.unitQty = double.Parse(unitQty);
+					
+					 productProfileDTO.unitQty = StringUtilsCustom.ExtractDoubleValue(productprofile.Element("CONVERSION")?.Value ?? "1");
+				
                     productProfileDTO.unitQty = productProfileDTO.unitQty == 0 ? 1 : productProfileDTO.unitQty;
-                    string Cess = productprofile.Element("_CESS")?.Value ?? "0";
-                    productProfileDTO.cessTaxRate = double.Parse(Cess);
+					productProfileDTO.cessTaxRate=StringUtilsCustom.ExtractDoubleValue(productprofile.Element("_CESS")?.Value ?? "0");
+					
                     ProductProfileTaxMasterDTO productProfileTaxMasterDTO = new ProductProfileTaxMasterDTO(productProfileDTO);
                     if (gstItems != null && gstItems.Length > 0)
                     {
@@ -162,7 +145,7 @@ namespace SNR_ClientApp.Parsers
                         masterDTOs.Add(sgstMasterDTO);
 
                     }
-                    if (_list.Where(x => x.name == productProfileDTO.name).Count() == 0)
+                    if (_list.Where(x => x.name == productProfileDTO.name).Count() == 0 && productProfileDTO.name!="")
                     {
                         _list.Add(productProfileDTO);
                     }
@@ -172,7 +155,10 @@ namespace SNR_ClientApp.Parsers
                     }
                     productProfileTaxMasterDTO.productProfileTaxMasterDTOs = masterDTOs;
                     uploadPPTaxToServer.Add(productProfileTaxMasterDTO);
-                }
+					LogManager.WriteLog("ProductProfile");
+					var myContent = JsonConvert.SerializeObject(_list);
+					LogManager.WriteLog(myContent.ToString());
+				}
                 if (_list.Count > 0)
                 {
                     ENVELOPE tallyRequest = new ENVELOPE();
@@ -271,8 +257,22 @@ namespace SNR_ClientApp.Parsers
             }
 
           
+
         }
-        private ENVELOPE getCompanyStockItemGSTWithCessRateXml()
+
+		public static string RemoveInvalidXmlChars(string text)
+		{
+			if (string.IsNullOrEmpty(text)) return text;
+
+			// Removes characters not allowed in XML (except \t, \n, \r)
+			return new string(text.Where(ch =>
+				ch == 0x9 || ch == 0xA || ch == 0xD ||
+				(ch >= 0x20 && ch <= 0xD7FF) ||
+				(ch >= 0xE000 && ch <= 0xFFFD) ||
+				(ch >= 0x10000 && ch <= 0x10FFFF)
+			).ToArray());
+		}
+		private ENVELOPE getCompanyStockItemGSTWithCessRateXml()
         {
             ENVELOPE tallyRequest = new ENVELOPE();
             HEADER header = new HEADER();

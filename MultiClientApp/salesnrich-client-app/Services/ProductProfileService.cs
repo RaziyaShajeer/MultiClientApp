@@ -62,8 +62,11 @@ namespace SNR_ClientApp.Services
                 var myContent = JsonConvert.SerializeObject(allProductProfilespTally);
                 LogManager.WriteLog("ProductProfile");
                 LogManager.WriteLog(myContent.ToString());
-                upload(allProductProfilespTally);
-            }
+
+               await  upload(allProductProfilespTally);
+				LogManager.WriteLog("Product profile" + allProductProfilespTally.Count);
+
+			}
             catch (Exception ex)
             {
                 
@@ -375,7 +378,7 @@ namespace SNR_ClientApp.Services
             }
         }
 
-        private void upload(List<ProductProfileDTO> list)
+        private async Task upload(List<ProductProfileDTO> list)
         {
             try
             {

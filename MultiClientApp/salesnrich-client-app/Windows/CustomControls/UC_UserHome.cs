@@ -80,6 +80,7 @@ namespace SNR_ClientApp.Windows.CustomControls
 			}
 
 			string selectedCompany = companySelect.SelectedItem.ToString();
+			StringUtilsCustom.TALLY_COMPANY = selectedCompany.ToString();
 			ApplicationProperties.getAllProperties(selectedCompany);
 			//sync operationtypes
 			var syncOperationTypes = MasterDataUploadServices.getSyncOperationTypes();
@@ -456,7 +457,7 @@ namespace SNR_ClientApp.Windows.CustomControls
 
 					if (chk_productProfile.Checked)
 					{
-						ProductProfileUploadAsync();
+						await ProductProfileUploadAsync();
 
 					}
 					if (chk_location.Checked)
@@ -515,7 +516,7 @@ namespace SNR_ClientApp.Windows.CustomControls
 					}
 
 					// working async in server
-					
+
 					if (chk_priceLevelList_id.Checked)
 					{
 						await PriceLevelListUploadAsync();
@@ -524,7 +525,7 @@ namespace SNR_ClientApp.Windows.CustomControls
 
 					// working async in server
 					if (chk_openingStock.Checked)
-					{ 
+					{
 						await OpeningStockUploadAsync();
 
 					}
@@ -996,6 +997,7 @@ namespace SNR_ClientApp.Windows.CustomControls
 			ApplicationProperties.getAllProperties(StringUtilsCustom.TALLY_COMPANY);
 
 			ApplicationProperties.properties["tally.company"] = companySelect.Text;
+
 			ApplicationProperties.updatePropertiesFile(StringUtilsCustom.TALLY_COMPANY);
 			string json = System.Text.Json.JsonSerializer.Serialize(ApplicationProperties.properties);
 			LogManager.WriteLog(json);
@@ -1044,6 +1046,11 @@ namespace SNR_ClientApp.Windows.CustomControls
 		}
 
 		private void chk_groupWiseAccount_CheckedChanged(object sender, EventArgs e)
+		{
+
+		}
+
+		private void chk_Account_ClosingBalance_CheckedChanged(object sender, EventArgs e)
 		{
 
 		}

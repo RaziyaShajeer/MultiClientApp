@@ -404,6 +404,7 @@
 			chk_Account_ClosingBalance.TabIndex = 44;
 			chk_Account_ClosingBalance.Text = "Closing Balance Account Profile";
 			chk_Account_ClosingBalance.UseVisualStyleBackColor = true;
+			chk_Account_ClosingBalance.CheckedChanged += chk_Account_ClosingBalance_CheckedChanged;
 			// 
 			// chk_post_dated_voucher
 			// 

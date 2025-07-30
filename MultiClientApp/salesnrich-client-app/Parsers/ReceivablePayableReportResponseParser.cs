@@ -150,6 +150,7 @@ namespace SNR_ClientApp.Parsers
                     {
                         billReceivables.Add(billReceivable);
                     }
+
                 }catch(Exception ex)
                 {
                     LogManager.HandleException(ex);

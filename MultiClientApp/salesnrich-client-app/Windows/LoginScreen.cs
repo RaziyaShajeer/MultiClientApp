@@ -239,7 +239,7 @@ namespace SNR_ClientApp.Windows
 
 
 
-		private void button1_Click(object sender, EventArgs e)
+		private async void button1_Click(object sender, EventArgs e)
 		 
 		{
 
@@ -255,8 +255,10 @@ namespace SNR_ClientApp.Windows
 					loginDto.rememberMe = rememberMeChkBox.Checked;
 
 
+					LogManager.WriteLog("Calling authenticateAsync...");
 					LogManager.WriteLog("Login into SalesNrich ...");
-					var res = authenticationService.authenticateAsync(loginDto);
+					var res =  await authenticationService.authenticateAsync(loginDto);
+					LogManager.WriteLog("Authentication result: " + (res != null ? res.StatusCode.ToString() : "NULL"));
 
 					if (res != null && res.IsSuccessStatusCode)
 					{
@@ -265,7 +267,7 @@ namespace SNR_ClientApp.Windows
 						var isFirstTimeLogin = ApplicationProperties.userinitialproperty.GetValueOrDefault("isFirstTimeLogin").ToString();
 						if (isFirstTimeLogin.Equals("true", StringComparison.OrdinalIgnoreCase))
 						{
-							 authenticationService.setDeviceKey();
+					 authenticationService.setDeviceKey();
 						}
 
 						bool isAuthenticated = authenticationService.validateApplication();
@@ -274,13 +276,14 @@ namespace SNR_ClientApp.Windows
 						if (isAuthenticated)
 						{
 							//UploadSalesFromTally();
-							bool cond = getsyncOperation();
+							bool cond =  getsyncOperation();
 							if (!cond)
 							{
 								MessageBox.Show("Please configure settings");
 								return;
 							}
-
+							ApplicationProperties.userinitialproperty["RememberPass"] = ConfigurationManager.AppSettings["FullURL"].ToString();
+								ApplicationProperties.updatePropertiesFile();
 
 							if (rememberMeChkBox.Checked)
 							{

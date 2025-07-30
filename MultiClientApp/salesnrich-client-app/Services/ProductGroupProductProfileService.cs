@@ -59,9 +59,9 @@ namespace SNR_ClientApp.Services
                 LogManager.WriteLog(myContent.ToString());
                 if (_list.Count > 0)
 
+					LogManager.WriteLog("GroupWise Item Upload" + _list.Count);
 
-
-                    upload(_list);
+				upload(_list);
             }
         
             catch (Exception ex)

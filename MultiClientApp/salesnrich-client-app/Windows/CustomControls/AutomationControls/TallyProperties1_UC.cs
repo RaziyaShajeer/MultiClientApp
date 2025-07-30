@@ -59,14 +59,14 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
         {
             ENVELOPE tallyRequest = new ENVELOPE();
             LogManager.WriteLog("listing Groups started...");
-            tallyRequest =await groupsunderparentGenerateXml.groupsunderCurrentassetsGenerateXml();
+            tallyRequest =await groupsunderparentGenerateXml.groupsunderCurrentassetsGenerateXml("Current Assets");
             var stringwriter = new System.IO.StringWriter();
             System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
             x.Serialize(stringwriter, tallyRequest);
 
             var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
 
-            var row =await AccountGroupResponseParser.CompanyGroupnameresponseParser(data);
+            var row =await AccountGroupResponseParser.groupsunderCurrentassetsresponseParser(data);
 
 
             

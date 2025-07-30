@@ -323,6 +323,7 @@
 			employeeList.Size = new Size(248, 27);
 			employeeList.TabIndex = 64;
 			employeeList.Visible = false;
+			employeeList.SelectedIndexChanged += employeeList_SelectedIndexChanged;
 			// 
 			// panel1
 			// 

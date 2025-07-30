@@ -48,7 +48,7 @@ namespace SNR_ClientApp.Parsers
 				string name = node.Attribute("NAME")?.Value ?? "";
 				name = Regex.Replace(name, pattern, "").Trim();
 				name = CleanEncodingIssues(name);
-				if (name != "")
+				if (!string.IsNullOrEmpty(name))
 				{
 					goDownNames.Add(name);
 				}

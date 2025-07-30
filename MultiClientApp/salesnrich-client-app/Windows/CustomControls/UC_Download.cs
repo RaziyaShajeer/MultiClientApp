@@ -83,7 +83,11 @@ namespace SNR_ClientApp.Windows.CustomControls
 
 		private void loadInitialValues()
 		{
-	
+			companySelect.DataSource = LoadCompanyNames.LoadCompanyNamesoftally();
+
+			companySelect.SelectedItem = StringUtilsCustom.TALLY_COMPANY;
+			string selectedCompany = companySelect.SelectedItem.ToString();
+			ApplicationProperties.getAllProperties(selectedCompany);
 			companySelect.SelectedItem = StringUtilsCustom.TALLY_COMPANY;
 			if ("true".Equals(byEmpVoucher, StringComparison.OrdinalIgnoreCase))
 			{
@@ -918,15 +922,20 @@ namespace SNR_ClientApp.Windows.CustomControls
 
 		private void companySelect_SelectedIndexChanged(object sender, EventArgs e)
 		{
-			StringUtilsCustom.TALLY_COMPANY = companySelect.Text;
+				StringUtilsCustom.TALLY_COMPANY = companySelect.Text;
 
-			ApplicationProperties.getAllProperties(StringUtilsCustom.TALLY_COMPANY);
+				ApplicationProperties.getAllProperties(StringUtilsCustom.TALLY_COMPANY);
 
-			ApplicationProperties.properties["tally.company"] = companySelect.Text;
-			ApplicationProperties.updatePropertiesFile(StringUtilsCustom.TALLY_COMPANY);
+				ApplicationProperties.properties["tally.company"] = companySelect.Text;
+				ApplicationProperties.updatePropertiesFile(StringUtilsCustom.TALLY_COMPANY);
 		}
 
 		private void flowLayoutPanel1_Paint_1(object sender, PaintEventArgs e)
+		{
+
+		}
+
+		private void employeeList_SelectedIndexChanged(object sender, EventArgs e)
 		{
 
 		}

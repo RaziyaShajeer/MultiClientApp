@@ -192,7 +192,7 @@ namespace SNR_ClientApp.Services
                             {
                                 totalSuccessCount = totalSuccessCount + resp.SuccessOrders.Count;
                                 //LogManager.WriteLog(+resp.SuccessOrders.Count + " Reciept is downloaded");
-                               uC_Logger.AppendLogMsg(+resp.SuccessOrders.Count + " Reciept is downloaded");
+                              // uC_Logger.AppendLogMsg(+resp.SuccessOrders.Count + " Reciept is downloaded");
                             }
                             if (resp.FailedOrders.Count > 0)
                             {
@@ -202,7 +202,7 @@ namespace SNR_ClientApp.Services
                                 string updatesalesOrderFailedStatus = ApiConstants.UPDATE_RECEIPT_STATUS_PENDING;
                                 HttpContent content2 = new StringContent(JsonConvert.SerializeObject(resp.FailedOrders), Encoding.UTF8, "application/json");
                                 HttpResponseMessage updateResult = httpClient.PostAsync(updatesalesOrderFailedStatus, content2).Result;
-								uC_Logger.AppendLogMsg(+resp.FailedOrders.Count + " Reciept is downloaded");
+								//uC_Logger.AppendLogMsg(+resp.FailedOrders.Count + " Reciept is downloaded");
 							}
                             if (resp.isLedgerMissmatch)
                             {
@@ -451,7 +451,12 @@ namespace SNR_ClientApp.Services
                 string newUuid = Guid.NewGuid().ToString();
 
                 string ledgerName = receiptDTO.ledgerName;
-            String companyName = CompanyService.getCompanyName();
+			string trimChar = receiptDTO.trimChar == null ? "" : receiptDTO.trimChar;
+		ledgerName = receiptDTO.ledgerName + trimChar;
+			if (ledgerName.Contains('~'))
+				ledgerName = ledgerName.Split('~')[0];
+
+			//String companyName = CompanyService.getCompanyName();
             char[] str = (newUuid).ToCharArray();
                 string RemoteId = KeyGeneratorUtil.GetRandomCustomString(str, 6) + "-" + ledgerName;
                 String dates = receiptDTO.date;
@@ -658,15 +663,18 @@ namespace SNR_ClientApp.Services
                 //generate individual receipt 
 
                 StringBuilder builder = new StringBuilder();
-                string trimChar = receiptDTO.trimChar == null ? "" : receiptDTO.trimChar;
-                string ledgerName1 = StringUtilsCustom.replaceSpecialCharactersWithXmlValue(receiptDTO.particularsName) + trimChar;
+                 trimChar = receiptDTO.trimChar == null ? "" : receiptDTO.trimChar;
+      ledgerName = StringUtilsCustom.replaceSpecialCharactersWithXmlValue(receiptDTO.particularsName) + trimChar;
+
                 ALLLEDGERENTRIESLIST aLLLEDGERENTRIESLIST = new ALLLEDGERENTRIESLIST();
                // OLDAUDITENTRYIDSLIST oLDAUDITENTRYIDSLIST1 = new();
                 oLDAUDITENTRYIDSLIST.TYPE = "Number";
                 oLDAUDITENTRYIDSLIST.OLDAUDITENTRYIDS = "-1";
 
                 aLLLEDGERENTRIESLIST.OLDAUDITENTRYIDSLIST = oLDAUDITENTRYIDSLIST;
-                aLLLEDGERENTRIESLIST.LEDGERNAME = receiptDTO.particularsName;
+			if (receiptDTO.particularsName.Contains('~'))
+				receiptDTO.particularsName = receiptDTO.particularsName.Split('~')[0];
+			aLLLEDGERENTRIESLIST.LEDGERNAME = receiptDTO.particularsName;
                 aLLLEDGERENTRIESLIST.GSTCLASS = "";
                 aLLLEDGERENTRIESLIST.ISDEEMEDPOSITIVE = "No";
                 aLLLEDGERENTRIESLIST.LEDGERFROMITEM = "No";

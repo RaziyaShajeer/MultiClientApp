@@ -15,9 +15,10 @@ namespace SNR_ClientApp.Parsers
 		public  List<ProductProfileDTO> ParseStockItemListXml(string tallyResponseXml)
 		{
 			var allStockItems = new List<ProductProfileDTO>();
-			tallyResponseXml = tallyResponseXml.Replace("\u0004", "");
-			tallyResponseXml = tallyResponseXml.Replace("&#4;", " ");
-			tallyResponseXml = tallyResponseXml.Replace("&apos;", "'");
+			tallyResponseXml = tallyResponseXml.Replace("&#13;", "")
+						   .Replace("&#10;", "")
+						   .Replace("&#4;", " ")
+						 ;
 			var doc = XDocument.Parse(tallyResponseXml);
 			var stockItems = doc.Descendants("STOCKITEM");
 			foreach (var item in stockItems)

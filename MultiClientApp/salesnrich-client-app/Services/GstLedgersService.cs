@@ -36,7 +36,8 @@ namespace SNR_ClientApp.Services
                 if (allGstLedgerspTally.Count > 0)
                 {
                     upload(allGstLedgerspTally);
-                }
+					LogManager.WriteLog("GstLedgers" + allGstLedgerspTally.Count);
+				}
             }catch(Exception e)
             {
 				LogManager.HandleException(e);
@@ -49,7 +50,7 @@ namespace SNR_ClientApp.Services
         {
 
 			ENVELOPE tallyRequest = new ENVELOPE();
-			tallyRequest= GSTLedgerGenerateXML.GstLedgerGenerateXml(parent);
+			tallyRequest= GSTLedgerGenerateXML.GstLedgerGenerateXmlcloud(parent);
 			var stringwriter = new System.IO.StringWriter();
 			System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
 			x.Serialize(stringwriter, tallyRequest);

@@ -81,7 +81,13 @@ namespace SNR_ClientApp.Tally.generateXml
 
             String trimChar = salesOrder.trimChar == null ? "" : salesOrder.trimChar;
             String itemName = StringUtilsCustom.replaceSpecialCharactersWithXmlValue(salesOrder.itemName) + trimChar;
-            ALLINVENTORYENTRIESLIST aLLINVENTORYENTRIESLIST = new ALLINVENTORYENTRIESLIST();
+			if (itemName.Contains("~"))
+            {
+				string[] name = itemName.Split('~');
+              	itemName = name[0];
+				itemName = itemName.Replace("&", "&amp;");
+			}
+				ALLINVENTORYENTRIESLIST aLLINVENTORYENTRIESLIST = new ALLINVENTORYENTRIESLIST();
             if (salesOrder.remarks != null)
             {
                 BASICUSERDESCRIPTIONLIST bASICUSERDESCRIPTIONLIST = new BASICUSERDESCRIPTIONLIST();
@@ -90,8 +96,8 @@ namespace SNR_ClientApp.Tally.generateXml
                 aLLINVENTORYENTRIESLIST.BASICUSERDESCRIPTIONLIST = bASICUSERDESCRIPTIONLIST;
 
             }
-            //aLLINVENTORYENTRIESLIST.STOCKITEMNAME = itemName;
-            aLLINVENTORYENTRIESLIST.STOCKITEMNAME = salesOrder.productName+trimChar;
+            aLLINVENTORYENTRIESLIST.STOCKITEMNAME = itemName;
+            //aLLINVENTORYENTRIESLIST.STOCKITEMNAME = salesOrder.productName+trimChar;
             aLLINVENTORYENTRIESLIST.SUBCATEGORY = "+ VAT";
             aLLINVENTORYENTRIESLIST.ISDEEMEDPOSITIVE = "No";
             aLLINVENTORYENTRIESLIST.ISLASTDEEMEDPOSITIVE = "No";
@@ -251,9 +257,11 @@ namespace SNR_ClientApp.Tally.generateXml
             String mainLocation = "";
             LogManager.WriteLog("SOURCE STOCK LOCATION :" + salesOrder.sourceStockLocationName);
             LogManager.WriteLog("STOCKLOCATION : " + salesOrder.stockLocationName);
-            if ("true".Equals(godownFixed))
-            {
+			if (godownFixed.Equals("true", StringComparison.OrdinalIgnoreCase))
+			{
+
                 salesOrder.stockLocationName = ApplicationProperties.properties["godownName"].ToString();
+               // salesOrder.stockLocationName = salesOrder.stockLocationName.Replace("&", "&amp;");
             }
             if (salesOrder.sourceStockLocationName == null)
             {
@@ -261,7 +269,8 @@ namespace SNR_ClientApp.Tally.generateXml
                 if (salesOrder.stockLocationName == null)
                 {
                     mainLocation = ApplicationProperties.properties["godownName"].ToString();
-                }
+					//mainLocation = mainLocation.Replace("&", "&amp;");
+				}
                 else
                 {
                     mainLocation = salesOrder.stockLocationName;
@@ -285,9 +294,10 @@ namespace SNR_ClientApp.Tally.generateXml
 
             bATCHALLOCATIONSLIST.GODOWNNAME = mainLocation;
             String batchName = "Primary Batch";
-            if ("true".Equals(batchFixed))
-            {
+			if (batchFixed.Equals("true", StringComparison.OrdinalIgnoreCase))
+	{
                 batchName = ApplicationProperties.properties["batchName"].ToString();
+                //batchName = batchName.Replace("&", "&amp;");
             }
             bATCHALLOCATIONSLIST.BATCHNAME = batchName;
             bATCHALLOCATIONSLIST.DESTINATIONGODOWNNAME = mainLocation;

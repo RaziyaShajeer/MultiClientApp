@@ -50,9 +50,12 @@ namespace SNR_ClientApp.Tally
 					var serializer = new XmlSerializer(tallyRequest.xmlObj.GetType());
 					var stringwriter = new StringWriter();
 					serializer.Serialize(stringwriter, tallyRequest.xmlObj, ns);
-					
-                    LogManager.WriteLog(stringwriter.ToString());
-                    TallyDownloadResponse data = await tallyCommunicator.UploadDataToTally(stringwriter.ToString());
+					string xmlString = stringwriter.ToString();
+					xmlString = FixGodownEntities(xmlString);  // <-- Fix the numeric entity
+					TallyDownloadResponse data = await tallyCommunicator.UploadDataToTally(xmlString);
+					LogManager.WriteLog(stringwriter.ToString());
+                   // TallyDownloadResponse data = null ;
+                  
                     LogManager.WriteLog(data.response.ToString());
                  
                     if (data != null)
@@ -167,8 +170,16 @@ namespace SNR_ClientApp.Tally
             resp.isLedgerMissmatch= isLedgerMissmatch;
 			return new TallyResponse("OK", "Orders post to tally successfully", resp);
         }
+		private static string FixGodownEntities(string xml)
+		{
+			// Replace &amp;#4; with &#4; only inside specific nodes
+			xml = Regex.Replace(xml,
+				@"(?<=<(GODOWNNAME|BATCHNAME|DESTINATIONGODOWNNAME)>)&amp;#4;", "&#4;",
+				RegexOptions.IgnoreCase);
 
-        public async Task<TallyResponse> postReceiptsToTallyAsync(List<TallyXml> receipts)
+			return xml;
+		}
+		public async Task<TallyResponse> postReceiptsToTallyAsync(List<TallyXml> receipts)
         {
             LogManager.WriteLog("postReceiptsToTally ................" + receipts.Count);
             List<String> successReceipts = new List<String>();

@@ -14,9 +14,10 @@ namespace SNR_ClientApp.Parsers
 		public static List<ProductCategoryDTO> ParseStockCategoryListXml(string tallyResponseXml)
 		{
 			var categoryList = new List<ProductCategoryDTO>();
-			tallyResponseXml = tallyResponseXml.Replace("&#4;", " ");
-			tallyResponseXml = tallyResponseXml.Replace("&apos;", "'");
-			tallyResponseXml = tallyResponseXml.Replace("&", "&");
+			tallyResponseXml = tallyResponseXml.Replace("&#13;", "")
+								   .Replace("&#10;", "")
+								   .Replace("&#4;", " ")
+								 ;
 			var doc = XDocument.Parse(tallyResponseXml);
 			var stockCategories = doc.Descendants("STOCKCATEGORY");
 

@@ -3,26 +3,18 @@ using SNR_ClientApp.TallyResponses;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography.Pkcs;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace SNR_ClientApp.Tally.generateXml
 {
-	internal static class CashRecieptVocherTypeGenerateXML
+	public static class VoucherTypegenerateXml
 	{
-		public static ENVELOPE getAllReciptVoucherTypeGenerateXml(string parent)
+		public static ENVELOPE getAllVoucherType()
 		{
+
 			
-			List<string> Parents = new List<string>(); ;
-			Parents.Add("Receipt");
-			
-			StringBuilder voucherTypeStringBuilder = new StringBuilder();
 
-
-
-			String vouchertypeNAme = " ($Parent= \"" + parent + "\")";
-			voucherTypeStringBuilder.Append(vouchertypeNAme);
 
 
 			ENVELOPE tallyRequest = new ENVELOPE();
@@ -130,7 +122,7 @@ namespace SNR_ClientApp.Tally.generateXml
 
 
 			collection.FETCH = "Name,Parent";
-		
+
 			// Comment out or remove the NativeMethod if FETCH is used
 			// List<String> NativeMethod = new List<string>();
 			// NativeMethod.Add("Parent");
@@ -138,7 +130,7 @@ namespace SNR_ClientApp.Tally.generateXml
 			// NativeMethod.Add("Guid");
 			// collection.NativeMethod = NativeMethod;
 			collectionsList.Add(collection);
-		
+
 			tdlmessage.COLLECTION = collectionsList;
 			tdl.TDLMESSAGE = tdlmessage;
 			desc.TDL = tdl;
@@ -146,5 +138,6 @@ namespace SNR_ClientApp.Tally.generateXml
 			tallyRequest.BODY = body;
 			return tallyRequest;
 		}
+	
 	}
 }

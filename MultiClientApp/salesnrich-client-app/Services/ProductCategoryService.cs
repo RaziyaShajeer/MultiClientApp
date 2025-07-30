@@ -53,8 +53,9 @@ namespace SNR_ClientApp.Services
                 productCategory.activated = true;
                 _list.Add(productCategory);
                 upload(_list);
+				LogManager.WriteLog("Product Category" + _list.Count);
 
-            }
+			}
             catch (Exception ex)
             {
                 LogManager.HandleException(ex);

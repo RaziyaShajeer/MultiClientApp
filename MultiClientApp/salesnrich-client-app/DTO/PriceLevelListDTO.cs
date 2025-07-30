@@ -25,7 +25,7 @@ namespace SNR_ClientApp.DTO
         //todo check with server 
         //added for getting discount
         public double discount { get; set; }
-		public string tallyCompanyName { get; set; }
+		public string tallycompanyName { get; set; }
 		public PriceLevelListDTO()
         {
 
@@ -40,7 +40,7 @@ namespace SNR_ClientApp.DTO
             this.date = date;
             this.rangeFrom = rangeFrom;
             this.rangeTo = rangeTo;
-			tallyCompanyName = ApplicationProperties.properties["tally.company"].ToString();
+			tallycompanyName = ApplicationProperties.properties["tally.company"].ToString();
 		}
     }
 }

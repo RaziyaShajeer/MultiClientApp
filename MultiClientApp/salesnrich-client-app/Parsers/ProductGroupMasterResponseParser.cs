@@ -16,10 +16,10 @@ namespace SNR_ClientApp.Parsers
 
 		{
 			List<ProductGroupDTO> productGroups = new List<ProductGroupDTO>();
-	
-			tallyResponseXml = tallyResponseXml.Replace("&#4;", " ");
-			tallyResponseXml = tallyResponseXml.Replace("&apos;", "'");
-			tallyResponseXml = tallyResponseXml.Replace("&", "&");
+			tallyResponseXml = tallyResponseXml.Replace("&#13;", "")
+								   .Replace("&#10;", "")
+								   .Replace("&#4;", " ")
+								 ;
 			XmlDocument doc = new XmlDocument();
 			doc.LoadXml(tallyResponseXml);
 

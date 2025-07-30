@@ -20,6 +20,7 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
 {
 	public partial class TalllyConnect : UserControl
 	{
+		
 		public static string selectedCompanyName;
 		public TallyConfigForm ParentForm { get; set; }
 		TallyService tallyService;
@@ -59,7 +60,10 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
 		}
 
 		private void button1_Click(object sender, EventArgs e)
+
 		{
+
+			
 			companySelect.SelectedItem = null;
 			ParentForm.Cursor = Cursors.WaitCursor;
 			try
@@ -90,6 +94,10 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
 					{
 
 						MessageBox.Show("Tally unable to connect to Tally...");
+						MainForm mainform = new MainForm();
+						mainform.Show();
+						this.Hide();
+						ParentForm.Hide();
 					}
 				}
 			}
@@ -105,6 +113,7 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
 
 		private async void GetCompany()
 		{
+
 			try
 			{
 				object[] row = await tallyService.getCompanies();
@@ -114,6 +123,7 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
 			{
 				LogManager.HandleException(e);
 				MessageBox.Show("Unable to fetch Company names");
+				
 			}
 		}
 
@@ -215,23 +225,28 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
 			{
 				try
 				{
-
-					string fileName = $"{TallyUpdateform.companyToupdate}.resx";
-					string filePath = Path.Combine(Directory.GetCurrentDirectory(), fileName);
-
-					if (File.Exists(filePath))
+					if (TallyUpdateform.companyToupdate != null)
 					{
+						string fileName = $"{TallyUpdateform.companyToupdate}.resx";
+						string filePath = Path.Combine(Directory.GetCurrentDirectory(), fileName);
 
-						ResXResourceReader rsr = new ResXResourceReader(filePath);
-						foreach (DictionaryEntry d in rsr)
+						if (File.Exists(filePath))
 						{
-							propertiestoupdate.Add(d.Key.ToString(), d.Value.ToString());
-							//Console.WriteLine(d.Key.ToString() + ":\t" + d.Value.ToString());
-						}
-						propertiestoupdate["tally.company"] = StringUtilsCustom.TALLY_COMPANY;
-						rsr.Close();
-					}
 
+							ResXResourceReader rsr = new ResXResourceReader(filePath);
+							foreach (DictionaryEntry d in rsr)
+							{
+								propertiestoupdate.Add(d.Key.ToString(), d.Value.ToString());
+								//Console.WriteLine(d.Key.ToString() + ":\t" + d.Value.ToString());
+							}
+							propertiestoupdate["tally.company"] = StringUtilsCustom.TALLY_COMPANY;
+							rsr.Close();
+							ApplicationProperties.createPropertyFile(StringUtilsCustom.TALLY_COMPANY);
+							ApplicationProperties.setProperties(propertiestoupdate);
+							ApplicationProperties.Removepropertyfile(TallyUpdateform.companyToupdate);
+						}
+
+					}
 				}
 				catch (Exception ex)
 				{
@@ -241,9 +256,7 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
 
 
 				}
-				ApplicationProperties.createPropertyFile(StringUtilsCustom.TALLY_COMPANY);
-				ApplicationProperties.setProperties(propertiestoupdate);
-				ApplicationProperties.Removepropertyfile(TallyUpdateform.companyToupdate);
+			
 
 			}
 			else

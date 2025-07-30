@@ -23,7 +23,7 @@ namespace SNR_ClientApp.Tally
     {
         public OdbcCommand cmd;
         public OdbcConnection con;
-        private Lazy<Dictionary<string, object>> lazyProps = new Lazy<Dictionary<string, object>>(() => ApplicationProperties.getAllProperties());
+        private Lazy<Dictionary<string, object>> lazyProps = new Lazy<Dictionary<string, object>>(() => ApplicationProperties.getAllProperties(StringUtilsCustom.TALLY_COMPANY));
         private Dictionary<string, object> companyProperties = new Dictionary<string, object>();
         // Property to access the lazy-loaded dictionary
         public Dictionary<string, object> props => lazyProps.Value;
@@ -492,6 +492,7 @@ namespace SNR_ClientApp.Tally
 
         public async Task<string> ExecXmlAndGetXmlAsync(String xmlQuery)
         {
+
             LogManager.WriteLog("Get request to Tally - \n XML : " + xmlQuery);
             TallyRequestResponse Tallyresponse = new TallyRequestResponse();
             HttpClient client = new HttpClient();

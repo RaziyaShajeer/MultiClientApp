@@ -219,7 +219,7 @@ namespace SNR_ClientApp.Tally.generateXml
             line.ISINTERNAL = "No";
             line.XMLtag = "Groups";
             // KEY MODIFICATION: Add FIELDS property to connect fields to the line
-            line.FIELD = "Field Name Groups";
+            line.FIELD = "Field Name Groups,Field Parent Groups";
             List<LINE> lines = new List<LINE>();
             lines.Add(line);
             tdlmessage.LINE = lines;
@@ -234,9 +234,19 @@ namespace SNR_ClientApp.Tally.generateXml
             field.SET = "$Name";
             field.XMLTAG = "NAME";
             fieldList.Add(field);
+			FIELD field1 = new FIELD();
+			field1.NAME = "Field Parent Groups";
+			field1.ISMODIFY = "No";
+			field1.ISFIXED = "No";
+			field1.ISINITIALIZE = "No";
+			field1.ISOPTION = "No";
+			field1.ISINTERNAL = "No";
+			field1.SET = "$Parent";
+			field1.XMLTAG = "PARENT";
+			fieldList.Add(field1);
 
-            
-            tdlmessage.FIELD = fieldList;
+
+			tdlmessage.FIELD = fieldList;
             List<COLLECTION> collectionsList = new List<COLLECTION>();
             COLLECTION collection = new COLLECTION();
             collection.NAME = "Collection of Groups";
@@ -251,29 +261,19 @@ namespace SNR_ClientApp.Tally.generateXml
             // OPTIONAL MODIFICATION: Replace NativeMethod with FETCH for better compatibility
             List<String> fetch = new List<string>();
             fetch.Add("Name");
-           
-            collection.FETCH = "Name";
-            // Comment out or remove the NativeMethod if FETCH is used
-            // List<String> NativeMethod = new List<string>();
-            // NativeMethod.Add("Parent");
-            // NativeMethod.Add("Name");
-            // NativeMethod.Add("Guid");
-            // collection.NativeMethod = NativeMethod;
+			collection.childof = parent;
+            collection.FETCH = "Name,Parent";
+			// Comment out or remove the NativeMethod if FETCH is used
+			// List<String> NativeMethod = new List<string>();
+			// NativeMethod.Add("Parent");
+			// NativeMethod.Add("Name");
+			// NativeMethod.Add("Guid");
+			// collection.NativeMethod = NativeMethod;
+	
             collectionsList.Add(collection);
-            List<String> filters = new List<string>();
-            filters.Add("ParentFilter");
-            collection.FILTERS = filters;
+       
             tdlmessage.COLLECTION = collectionsList;
-            List<SYSTEM> systems = new List<SYSTEM>();
-
-            SYSTEM filter = new SYSTEM();
-            filter.NAME = "ParentFilter";
-            filter.TYPE = "Formulae";
-            filter.Text = voucherTypeStringBuilder.ToString();
-            systems.Add(filter);
-
-            tdlmessage.SYSTEM = systems;
-           
+          
             tdl.TDLMESSAGE = tdlmessage;
             desc.TDL = tdl;
             body.DESC = desc;

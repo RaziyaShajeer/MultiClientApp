@@ -82,7 +82,8 @@ namespace SNR_ClientApp.Services
                 if (apToServer.Count > 0)
                 {
                     upload(apToServer);
-                }
+					LogManager.WriteLog("GroupWise Account Upload" + apToServer.Count);
+				}
 
             }
 

@@ -44,6 +44,8 @@ namespace SNR_ClientApp.Services
                 DataTable response = new DataTable();
                 StringBuilder Query = new StringBuilder();
                 String vouchertypeName = ApplicationProperties.properties["receiptVoucherType"].ToString();
+
+
                 Query.Append("select $name,$Parent  from " + Tables.VoucherType + " where $Parent= " + vouchertypeName);
 
                 response = await tallyCommunicator.getdatatable(Query.ToString());

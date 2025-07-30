@@ -10,19 +10,19 @@ namespace SNR_ClientApp.Tally.generateXml
 {
     internal static class groupsunderparentGenerateXml
     {
-        public static async Task<ENVELOPE> groupsunderCurrentassetsGenerateXml()
+        public static async Task<ENVELOPE> groupsunderCurrentassetsGenerateXml(string parent)
         {
-            List<string> Parents = new List<string>(); ;
-            Parents.Add("Current Assets");
-            Parents.Add("GL 07; Current Assets");
-            StringBuilder voucherTypeStringBuilder = new StringBuilder();
+            //List<string> Parents = new List<string>(); ;
+            //Parents.Add("Current Assets");
+            //Parents.Add("GL 07; Current Assets");
+            //StringBuilder voucherTypeStringBuilder = new StringBuilder();
             string prefix = "";
-            foreach (string parent in Parents)
-            {
-                String vouchertypeNAme = prefix + " ($Parent = \"" + parent + "\")";
-                voucherTypeStringBuilder.Append(vouchertypeNAme);
-                prefix = "or";
-            }
+            //foreach (string parent in Parents)
+            //{
+            //    String vouchertypeNAme = prefix + " ($Parent = \"" + parent + "\")";
+            //    voucherTypeStringBuilder.Append(vouchertypeNAme);
+            //    prefix = "or";
+            //}
             ENVELOPE tallyRequest = new ENVELOPE();
             HEADER header = new HEADER();
             header.VERSION = "1";
@@ -82,7 +82,7 @@ namespace SNR_ClientApp.Tally.generateXml
             line.ISINTERNAL = "No";
             line.XMLtag = "Groups";
             // KEY MODIFICATION: Add FIELDS property to connect fields to the line
-            line.FIELD = "Field Name Groups";
+            line.FIELD = "Field Name Groups,Field Parent Groups";
             List<LINE> lines = new List<LINE>();
             lines.Add(line);
             tdlmessage.LINE = lines;
@@ -97,10 +97,20 @@ namespace SNR_ClientApp.Tally.generateXml
             field.SET = "$Name";
             field.XMLTAG = "NAME";
             fieldList.Add(field);
+			FIELD field1 = new FIELD();
+			field1.NAME = "Field Parent Groups";
+			field1.ISMODIFY = "No";
+			field1.ISFIXED = "No";
+			field1.ISINITIALIZE = "No";
+			field1.ISOPTION = "No";
+			field1.ISINTERNAL = "No";
+			field1.SET = "$Parent";
+			field1.XMLTAG = "PARENT";
+			fieldList.Add(field1);
 
-           
-           
-            tdlmessage.FIELD = fieldList;
+
+
+			tdlmessage.FIELD = fieldList;
             List<COLLECTION> collectionsList = new List<COLLECTION>();
             COLLECTION collection = new COLLECTION();
             collection.NAME = "Collection of Groups";
@@ -117,7 +127,8 @@ namespace SNR_ClientApp.Tally.generateXml
             fetch.Add("Name");
             
 
-            collection.FETCH = "Name";
+            collection.FETCH = "Name,Parent";
+            collection.childof = parent;
             // Comment out or remove the NativeMethod if FETCH is used
             // List<String> NativeMethod = new List<string>();
             // NativeMethod.Add("Parent");
@@ -125,18 +136,18 @@ namespace SNR_ClientApp.Tally.generateXml
             // NativeMethod.Add("Guid");
             // collection.NativeMethod = NativeMethod;
             collectionsList.Add(collection);
-            List<String> filters = new List<string>();
-            filters.Add("ParentFilter");
-            collection.FILTERS = filters;
-            tdlmessage.COLLECTION = collectionsList;
-            List<SYSTEM> systems = new List<SYSTEM>();
+            //List<String> filters = new List<string>();
+            //filters.Add("ParentFilter");
+            //collection.FILTERS = filters;
+            //tdlmessage.COLLECTION = collectionsList;
+            //List<SYSTEM> systems = new List<SYSTEM>();
 
-            SYSTEM filter = new SYSTEM();
-            filter.NAME = "ParentFilter";
-            filter.TYPE = "Formulae";
-            filter.Text = voucherTypeStringBuilder.ToString();
-            systems.Add(filter);
-            tdlmessage.SYSTEM = systems;
+            //SYSTEM filter = new SYSTEM();
+            //filter.NAME = "ParentFilter";
+            //filter.TYPE = "Formulae";
+            //filter.Text = voucherTypeStringBuilder.ToString();
+            //systems.Add(filter);
+            //tdlmessage.SYSTEM = systems;
             tdlmessage.COLLECTION = collectionsList;
             tdl.TDLMESSAGE = tdlmessage;
             desc.TDL = tdl;

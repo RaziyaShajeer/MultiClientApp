@@ -126,7 +126,8 @@ namespace SNR_ClientApp.Services
 
                 if (ppNames.Count > 0)
                 {
-                    uploadStockLocation(stockLocations(ppNames));
+           uploadStockLocation(stockLocations(ppNames));
+                    LogManager.WriteLog("Stock loaction Name:" + ppNames.Count);
 
                 }
                 if (opstkToServerTo.Count>0 || opstkToServer.Count>0)
@@ -141,8 +142,10 @@ namespace SNR_ClientApp.Services
                         });
                         LogManager.WriteLog("netstock true");
                         if(opstkToServerTo.Count>0)
-                         res= upload(opstkToServerTo);
-                    }
+                         res=await  upload(opstkToServerTo);
+						LogManager.WriteLog("opening stock:" + opstkToServer.Count);
+
+					}
                     else
                     {
                         opstkToServer.ForEach(p =>
@@ -154,8 +157,10 @@ namespace SNR_ClientApp.Services
                         {
                             LogManager.WriteLog(opstkToServer.ToString());  
                              
-                            res= upload(opstkToServer);
-                            return res;
+                            res= await upload(opstkToServer);
+                            LogManager.WriteLog("opening stock:" + opstkToServer.Count);
+
+							return res;
                         }
                     }
 
@@ -176,7 +181,7 @@ namespace SNR_ClientApp.Services
             }
         }
 
-        private bool upload(List<OpeningStockDTO> list)
+        private async Task<bool> upload(List<OpeningStockDTO> list)
         {
             try
             {
@@ -194,24 +199,24 @@ namespace SNR_ClientApp.Services
                 LogManager.WriteLog(myContent.ToString());  
                 HttpContent inputContent = new StringContent(myContent, Encoding.UTF8, "application/json");
                 LogManager.WriteLog("url to opening stock "+requestUri+ "and body"+myContent.ToString());
-                var responseTask = httpClient.PostAsync(requestUri, inputContent);
+                var responseTask = await httpClient.PostAsync(requestUri, inputContent);
 
-                responseTask.Wait();
+                //responseTask.Wait();
 
-                HttpResponseMessage Res = responseTask.Result;
+                //HttpResponseMessage Res = responseTask.Result;
                 LogManager.WriteLog("Uploading Opening Stock  To Server Completed ....\n Response : ");
-                LogManager.WriteResponseLog(Res);
+                LogManager.WriteResponseLog(responseTask);
 
-                if (Res.IsSuccessStatusCode)
+                if (responseTask.IsSuccessStatusCode)
                 {
                     LogManager.WriteLog("request for uploading Opening Stock   Success..");
-                    var response = Res.Content.ReadAsStringAsync().Result;
+                    var response = await responseTask.Content.ReadAsStringAsync();
                     return true;
                 }
                 else
                 {
                     LogManager.WriteLog("request for uploading Opening Stock   Failed..");
-                    throw new ServiceException("Opening Stock upload failed statuscode:" + Res.StatusCode + " Message : " + Res.RequestMessage);
+                    throw new ServiceException("Opening Stock upload failed statuscode:" + responseTask.StatusCode + " Message : " + responseTask.RequestMessage);
 
                     return false;
                 }
@@ -224,7 +229,7 @@ namespace SNR_ClientApp.Services
             return false;
         }
 
-        public void uploadStockLocation(List<StockLocationDTO> stockLocationDTOs)
+        public async void uploadStockLocation(List<StockLocationDTO> stockLocationDTOs)
         {
 
             try
@@ -241,24 +246,24 @@ namespace SNR_ClientApp.Services
                 HttpContent inputContent = new StringContent(myContent, Encoding.UTF8, "application/json");
                 LogManager.WriteLog(inputContent.ToString());
                 LogManager.WriteLog("url to stockLocation "+requestUri+ "and body"+myContent.ToString());
-                var responseTask = httpClient.PostAsync(requestUri, inputContent);
+                var responseTask = await httpClient.PostAsync(requestUri, inputContent);
 
-                responseTask.Wait();
+                //responseTask.Wait();
 
-                HttpResponseMessage Res = responseTask.Result;
+                //HttpResponseMessage Res = responseTask.Result;
                 LogManager.WriteLog("Uploading STOCK_LOCATION To Server Completed ....\n Response : ");
-                LogManager.WriteResponseLog(Res);
+                LogManager.WriteResponseLog(responseTask);
 
-                if (Res.IsSuccessStatusCode)
+                if (responseTask.IsSuccessStatusCode)
                 {
                     LogManager.WriteLog("request for uploading STOCK_LOCATION  Success..");
-                    var response = Res.Content.ReadAsStringAsync().Result;
+                    var response =await  responseTask.Content.ReadAsStringAsync();
                 }
                 else
                 {
 
                     LogManager.WriteLog("request for uploading STOCK_LOCATION  Failed..");
-                    throw new ServiceException("STOCK_LOCATION failed statuscode:" + Res.StatusCode + " Message : " + Res.RequestMessage);
+                    throw new ServiceException("STOCK_LOCATION failed statuscode:" + responseTask.StatusCode + " Message : " + responseTask.RequestMessage);
 
                 }
             }

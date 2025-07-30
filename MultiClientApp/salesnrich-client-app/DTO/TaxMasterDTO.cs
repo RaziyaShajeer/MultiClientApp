@@ -18,8 +18,13 @@ namespace SNR_ClientApp.DTO
         public String companyName { get; set; }
         public String companyPid { get; set; }
         public String vatClass { get; set; }
-		
-		
+		public string tallyCompanyName { get; set; }
+		public TaxMasterDTO()
+		{
+			tallyCompanyName = ApplicationProperties.properties["tally.company"].ToString();
+		}
 
-    }
+
+
+	}
 }

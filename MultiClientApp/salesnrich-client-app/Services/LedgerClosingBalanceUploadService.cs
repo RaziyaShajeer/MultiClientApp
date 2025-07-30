@@ -62,6 +62,7 @@ namespace SNR_ClientApp.Services
                     if (pgToServer.Count() > 0)
                     {
                         upload(pgToServer);
+                        LogManager.WriteLog("ClosingBalance:" + pgToServer.Count);
                     }
                 }
             }catch(Exception ex)

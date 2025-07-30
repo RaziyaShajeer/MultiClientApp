@@ -47,7 +47,8 @@ namespace SNR_ClientApp.Services
                 var myContent = JsonConvert.SerializeObject(_list);
                 LogManager.WriteLog(myContent.ToString());
 
-                upload(_list);
+				LogManager.WriteLog("TaxMaster---" + _list.Count);
+				upload(_list);
             }
             catch (Exception ex)
             {

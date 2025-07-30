@@ -76,6 +76,7 @@ namespace SNR_ClientApp.Services
                     locationToServer.Add(locationDTO);
                     
                         upload(locationToServer);
+                    LogManager.WriteLog("Location:" + locationToServer.Count);
                 }
   
                

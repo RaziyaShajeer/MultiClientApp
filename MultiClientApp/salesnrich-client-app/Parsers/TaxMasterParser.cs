@@ -14,10 +14,11 @@ namespace SNR_ClientApp.Parsers
 		public static List<TaxMasterDTO> ParseTaxMasterListXml(string tallyResponseXml)
 		{
 			var TaxMasterList = new List<TaxMasterDTO>();
-		
-			tallyResponseXml = tallyResponseXml.Replace("&#4;", " ");
-			tallyResponseXml = tallyResponseXml.Replace("&apos;", "'");
-			tallyResponseXml = tallyResponseXml.Replace("&amp;", "&");
+
+			tallyResponseXml = tallyResponseXml.Replace("&#13;", "")
+						   .Replace("&#10;", "")
+						   .Replace("&#4;", " ")
+						 ;
 
 			var doc = XDocument.Parse(tallyResponseXml);
 			List<TaxMasterDTO> taxMasterDTOs = new List<TaxMasterDTO>();

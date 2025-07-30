@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
@@ -15,14 +16,14 @@ namespace SNR_ClientApp.Parsers
 	{
 		public List<GstLedgerDTO> getAllGstLEdgers(string tallyResponseXml)
 		{
-			
-			List<GstLedgerDTO > lst = new List<GstLedgerDTO>();
+
+			List<GstLedgerDTO> lst = new List<GstLedgerDTO>();
 			try
 			{
 
 
 
-				
+
 
 				tallyResponseXml = tallyResponseXml.Replace("&#13;", "")
 							   .Replace("&#10;", "")
@@ -58,13 +59,72 @@ namespace SNR_ClientApp.Parsers
 					}
 				}
 			}
-			catch(Exception ex)
+			catch (Exception ex)
 			{
 				LogManager.WriteLog(ex.Message);
 
 			}
 			return lst;
 		}
+		public List<AccountProfileDTO> getAllLedgers(string tallyResponseXml)
+		{
+			List<AccountProfileDTO> allAccountProfilespTally = new List<AccountProfileDTO>();
+			try
+			{
+				List<AccountProfileDTO> duplicatelist = new List<AccountProfileDTO>();
+
+
+				tallyResponseXml = tallyResponseXml.Replace("&#13;", "")
+							 .Replace("&#10;", "")
+							 .Replace("&#4;", "");
+
+				var doc = XDocument.Parse(tallyResponseXml);
+				var ledgerList = doc.Descendants("LEDGER");
+				int ledgerCount = ledgerList.Count();
+				var count = 0;
+
+				// Log the count
+				LogManager.WriteLog("Number of LEDGER nodes: " + ledgerCount);
+
+
+				foreach (var node in ledgerList)
+				{
+					AccountProfileDTO accountProfileDTO = new AccountProfileDTO();
+					accountProfileDTO.customerId = node.Element("GUID")?.Value ?? "";
+					accountProfileDTO.name = node.Attribute("NAME")?.Value ?? "";
+
+
+					//string pattern = @"(&#13;&#10;|&#13;|&#10;|[\r\n\t])+";
+					if (accountProfileDTO.name.EndsWith("\r\n"))
+					{
+						accountProfileDTO.name = accountProfileDTO.name.Replace("\r\n", "");
+						accountProfileDTO.trimChar = "#13;#10;";
+					}
+
+					// 13/10/2023
+					// todo : need to verify with download order
+					string pattern = @"[\r\n\t]+$";
+					string result = Regex.Replace(accountProfileDTO.name, pattern, "");
+
+					accountProfileDTO.name = result;
+
+					if (!string.IsNullOrEmpty(accountProfileDTO.name))
+					{
+						allAccountProfilespTally.Add(accountProfileDTO);
+					}
+
+
+
+				}
+
+			}
+			catch (Exception ex)
+			{
+				LogManager.WriteLog(ex.Message);
+			}
+			return allAccountProfilespTally;
+		}
 	}
-	}
+}
+
 

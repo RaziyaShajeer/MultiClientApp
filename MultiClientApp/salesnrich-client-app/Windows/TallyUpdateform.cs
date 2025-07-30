@@ -17,6 +17,7 @@ namespace SNR_ClientApp.Windows
 	public partial class TallyUpdateform : Form
 	{
 		public static string companyToupdate;
+		public static string oldCompanyname=null;
 		public TallyUpdateform()
 		{
 			InitializeComponent();
@@ -74,8 +75,21 @@ namespace SNR_ClientApp.Windows
 
 		private void button1_Click(object sender, EventArgs e)
 		{
+			if (combo_ConnnectCompanies.Items.Count == 0)
+			{
+				MessageBox.Show("No companies available to select.");
+				return;
+			}
 
+			if (combo_ConnnectCompanies.SelectedItem == null)
+			{
+				MessageBox.Show("Please select a company.");
+				return;
+			}
+
+			
 			companyToupdate = combo_ConnnectCompanies.SelectedItem.ToString();
+			oldCompanyname = companyToupdate;
 			this.DialogResult = DialogResult.OK;
 			this.Close(); // Closes ChildForm
 

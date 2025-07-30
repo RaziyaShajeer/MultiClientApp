@@ -28,6 +28,7 @@ namespace SNR_ClientApp.Services
 {
     public class TallyService
     {
+        GST_LedgerParse ledgerpaarser = new GST_LedgerParse();
 		public OdbcConnection con;
 		public static Dictionary<string, string> props = new Dictionary<string, string>();
         TallyCommunicator tallyCommunicator = new TallyCommunicator();
@@ -184,7 +185,7 @@ namespace SNR_ClientApp.Services
 		{
 			ENVELOPE tallyRequest = new ENVELOPE();
 			LogManager.WriteLog("listing Groups started...");
-			tallyRequest = GSTLedgerGenerateXML.GstLedgerGenerateXml(Parent);
+			tallyRequest = GSTLedgerGenerateXML.GstLedgerGenerateXmlcloud(Parent);
 			var stringwriter = new System.IO.StringWriter();
 			System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
 			x.Serialize(stringwriter, tallyRequest);
@@ -201,7 +202,7 @@ namespace SNR_ClientApp.Services
           
 			ENVELOPE tallyRequest = new ENVELOPE();
 			LogManager.WriteLog("listing Groups started...");
-			tallyRequest = GSTLedgerGenerateXML.GstLedgerGenerateXml(Parent);
+			tallyRequest = GSTLedgerGenerateXML.GstLedgerGenerateXmlcloud(Parent);
 			var stringwriter = new System.IO.StringWriter();
 			System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
 			x.Serialize(stringwriter, tallyRequest);
@@ -262,14 +263,30 @@ namespace SNR_ClientApp.Services
 			ENVELOPE tallyRequest = new ENVELOPE();
 			LogManager.WriteLog("listing  Cash Sales Return Voucher Types started...");
 
-			tallyRequest = CashRecieptVocherTypeGenerateXML.getAllReciptVoucherTypeGenerateXml("Credit Note");
+			tallyRequest = CashRecieptVocherTypeGenerateXML.getAllReciptVoucherTypeGenerateXml("Credit Note (VAT)");
 			var stringwriter = new System.IO.StringWriter();
 			System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
 			x.Serialize(stringwriter, tallyRequest);
 
 			var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
 
-			var voucherTypes = await cashReciptVoucherTypeParser.getAllReciptVochertypeParser(data);
+			var voucherTypes = await cashReciptVoucherTypeParser.getCreditNotVAtVochertypeParser(data);
+		
+			LogManager.WriteLog("listing  Cash Sales Return Voucher Types started...");
+
+			tallyRequest = CashRecieptVocherTypeGenerateXML.getAllReciptVoucherTypeGenerateXml("Credit Note");
+			 stringwriter = new System.IO.StringWriter();
+		 x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
+			x.Serialize(stringwriter, tallyRequest);
+
+			 data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
+
+			var voucherTypescreditNote = await cashReciptVoucherTypeParser.getCreditNotVochertypeParser(data);
+            if(voucherTypescreditNote!=null)
+            {
+				voucherTypes.AddRange(voucherTypescreditNote);
+			}
+            
 			LogManager.WriteLog("listing Cash Receipt Voucher Types ended...");
 		
             return voucherTypes.ToArray();
@@ -278,7 +295,8 @@ namespace SNR_ClientApp.Services
         internal async Task<string[]> getAllSalesReturnLedgerNames()
         {
 			ENVELOPE tallyRequest = new ENVELOPE();
-			tallyRequest = LedgerunderParentxml.LedgerUnderParentGenerateXML("Sales Accounts");
+			tallyRequest = GSTLedgerGenerateXML.GstLedgerGenerateXmlcloud("Sales Accounts");
+		
 			var stringwriter = new System.IO.StringWriter();
 			System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
 			x.Serialize(stringwriter, tallyRequest);
@@ -293,12 +311,12 @@ namespace SNR_ClientApp.Services
             return ledgerNames.ToArray();
 
         }
-        public async Task<string[]> getAllLedgersByParent(string parent="")
-        {
+		public async Task<string[]> getAllLedgersByParentBank(string parent = "")
+		{
 			//if (string.IsNullOrEmpty(parent))
 			ENVELOPE tallyRequest = new ENVELOPE();
 
-			tallyRequest = LedgerunderParentxml.LedgerUnderParentGenerateXML(parent);
+			tallyRequest = GSTLedgerGenerateXML.GstLedgerGenerateXmlcloud(parent);
 
 
 			var stringwriter = new System.IO.StringWriter();
@@ -306,7 +324,28 @@ namespace SNR_ClientApp.Services
 			x.Serialize(stringwriter, tallyRequest);
 
 			var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
-			List<string> BankNames = await ledgerNameUnderParentParser.allLedgersUnderParent(data);
+			List<string> BankNames = await ledgerNameUnderParentParser.allLedgersUnderParentBankAccount(data);
+			//    parent="Bank Accounts";
+
+
+			//List<String> BankNames = new List<string>();
+			LogManager.WriteLog("listing Cash Receipt Voucher Types ended...");
+			return BankNames.ToArray();
+		}
+		public async Task<string[]> getAllLedgersByParentgroup(string parent="")
+        {
+			//if (string.IsNullOrEmpty(parent))
+			ENVELOPE tallyRequest = new ENVELOPE();
+
+			tallyRequest = GSTLedgerGenerateXML.GstLedgerGenerateXmlcloud(parent);
+
+
+			var stringwriter = new System.IO.StringWriter();
+			System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
+			x.Serialize(stringwriter, tallyRequest);
+
+			var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
+			List<string> BankNames = await ledgerNameUnderParentParser.allLedgersUnderParentgroup(data,parent);
 			//    parent="Bank Accounts";
 		
 
@@ -319,7 +358,7 @@ namespace SNR_ClientApp.Services
         {
 			ENVELOPE tallyRequest = new ENVELOPE();
 
-			tallyRequest = LedgerunderParentxml.LedgerUnderParentGenerateXML("Indirect Incomes");
+			    tallyRequest = GSTLedgerGenerateXML.GstLedgerGenerateXmlcloud("Indirect Incomes");
 
 
 			var stringwriter = new System.IO.StringWriter();
@@ -329,17 +368,17 @@ namespace SNR_ClientApp.Services
 
 			var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
 			LogManager.WriteLog("listing IndirectIncomes Ledger from tally started...");
-			List<string> datas = await ledgerNameUnderParentParser.allLedgersUnderParent(data);
+			List<string> datas = await ledgerNameUnderParentParser.allLedgersUnderParentIndirectIncomes(data);
 
             LogManager.WriteLog("listing IndirectIncomes ended...");
             return datas.ToArray();
         }
 
         public async Task<string[]> getAllIndirectExpences()
-        
-                                    {
+
+        { 
 			ENVELOPE tallyRequest = new ENVELOPE();
-            tallyRequest = LedgerunderParentxml.LedgerUnderParentGenerateXML("Indirect Expenses");
+			tallyRequest = GSTLedgerGenerateXML.GstLedgerGenerateXmlcloud("Indirect Expenses");
 			var stringwriter = new System.IO.StringWriter();
 			System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
 			x.Serialize(stringwriter, tallyRequest);
@@ -347,7 +386,7 @@ namespace SNR_ClientApp.Services
 
 			var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
 			LogManager.WriteLog("listing Indirect Expences Ledger from tally started...");
-			List<string> datas = await ledgerNameUnderParentParser.allLedgersUnderParent(data);
+			List<string> datas = await ledgerNameUnderParentParser.allLedgersUnderParentIndirectExpenses(data);
 			
             
             
@@ -370,7 +409,7 @@ namespace SNR_ClientApp.Services
 			var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
 			LogManager.WriteLog("listing Godown Names from tally started...");
 			List<string> datas = await GoDownNameParser.getAllGodownNames(data);
-
+            datas.Add("&#4; Any");
 			
             LogManager.WriteLog("listing Godown Names from tally ended...");
             return datas.ToArray();
@@ -378,28 +417,28 @@ namespace SNR_ClientApp.Services
 
         public async Task< List<AccountProfileDTO>> getAllLedgers()
         {
-            DataTable response = new DataTable();
-            StringBuilder Query = new StringBuilder();
-            Query.Append("select $Name,$Guid from " + Tables.Ledger);
-            List<AccountProfileDTO> allAccountProfilespTally = new List<AccountProfileDTO>();
-            response = await tallyCommunicator.getdatatable(Query.ToString());
+			List<AccountProfileDTO> ledgers = new List<AccountProfileDTO>();
+			try
+			{
+				ENVELOPE tallyRequest = new ENVELOPE();
 
-            if (response.Rows.Count > 0)
-            {
+				tallyRequest = AccountProfileXml.GenerateAccountProfileXml();
 
 
-                foreach (DataRow dr in response.Rows)
-                {
-                    AccountProfileDTO accountProfileDTO = new AccountProfileDTO();
-                    accountProfileDTO.customerId = ((string)dr["$guid"]);
-                    accountProfileDTO.name = (dr["$name"] != DBNull.Value) ? (string)dr["$name"] : "";
+				var stringwriter = new System.IO.StringWriter();
+				System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
+				x.Serialize(stringwriter, tallyRequest);
 
+				var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
 
-                    allAccountProfilespTally.Add(accountProfileDTO);
-
-                }
-            }
-            return allAccountProfilespTally;
+				ledgers = ledgerpaarser.getAllLedgers(data);
+			}
+			catch (Exception ex)
+			{
+				LogManager.WriteLog(ex.Message);
+			}
+						
+			            return ledgers;
         }
 
         public async Task< List<ProductProfileDTO>> getAllStockItems()

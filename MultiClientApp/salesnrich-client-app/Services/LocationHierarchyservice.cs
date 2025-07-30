@@ -3,8 +3,11 @@ using SNR_ClientApp.Config;
 using SNR_ClientApp.DTO;
 using SNR_ClientApp.Enums;
 using SNR_ClientApp.Exceptions;
+using SNR_ClientApp.Parsers;
 using SNR_ClientApp.Properties;
 using SNR_ClientApp.Tally;
+using SNR_ClientApp.Tally.generateXml;
+using SNR_ClientApp.TallyResponses;
 using SNR_ClientApp.Utils;
 using System;
 using System.Collections.Generic;
@@ -34,35 +37,21 @@ namespace SNR_ClientApp.Services
         {
             try
             {
-                List<LocationDTO> _list = new List<LocationDTO>();
-                DataTable response = new DataTable();
-                StringBuilder Query = new StringBuilder();
-                Query.Append("select $Name,$Parent,$Guid,$AlterID from  " + Tables.Groups);
+				ENVELOPE tallyRequest = new ENVELOPE();
 
-                response = await tallyCommunicator.getdatatable(Query.ToString());
-
-                if (response.Rows.Count > 0)
-                {
+				tallyRequest = CompanygroupGenerateXml.getCompanyGroupsXml();
 
 
-                    foreach (DataRow dr in response.Rows)
-                    {
-                        LocationDTO item = new LocationDTO();
-                        item.locationId = ((string)dr["$guid"]);
-                        item.name = (dr["$name"] != DBNull.Value) ? (string)dr["$name"] : "";
-                        item.description = (dr["$parent"] != DBNull.Value) ? (string)dr["$parent"] : "";
-                        item.activated = true;
 
-                        item.alterId = (dr["$alterid"] != DBNull.Value) ? (long.Parse(dr["$alterid"].ToString())) : 0;
+				var stringwriter = new System.IO.StringWriter();
+				System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
+				x.Serialize(stringwriter, tallyRequest);
 
-
-                        _list.Add(item);
-
-                    }
-
-                    List<LocationDTO> locationToServer = SundryDebterUnderLocaions(_list);
-
-                    locationToServer.Add(new LocationDTO("Territory", null));
+				var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
+				List<LocationDTO> _list = new List<LocationDTO>();
+				_list = AccountGroupResponseParser.CompanyGroupresponseParser(data);
+				List<LocationDTO> locationToServer = SundryDebterUnderLocaions(_list);
+				                                    locationToServer.Add(new LocationDTO("Territory", null));
                     locationToServer.Add(new LocationDTO("Primary", "Territory"));
 
                     // creating location-hierarchy
@@ -80,7 +69,7 @@ namespace SNR_ClientApp.Services
 
 
                     //fileManagerService.writeObjectToFile(apTally, FILE_NAME);
-                }
+                
             }catch(Exception ex)
             {
                 LogManager.HandleException(ex, "Exception Occured while Uploading Location Hierarchy");

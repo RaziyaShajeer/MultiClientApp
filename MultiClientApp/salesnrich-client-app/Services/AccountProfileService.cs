@@ -76,6 +76,7 @@ namespace SNR_ClientApp.Services
 
 
 				}
+                LogManager.WriteLog("Account Profile" + apToServer.Count);
 
 			}
 			catch (Exception ex)

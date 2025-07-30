@@ -59,7 +59,8 @@ namespace SNR_ClientApp.Services
 
 
 				if (pgToServer.Count>0)
-                upload(pgToServer);
+					LogManager.WriteLog("Group Wise Gst" + pgToServer.Count);
+				upload(pgToServer);
 			}
 			catch (Exception ex)
 			{

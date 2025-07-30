@@ -15,18 +15,19 @@ namespace SNR_ClientApp.Tally.generateXml
 
 
 		{
-			List<string> receiptUnderVoucherTypes = new List<string>(); ;
-			receiptUnderVoucherTypes.Add("Duties & Taxes");
-			receiptUnderVoucherTypes.Add("GL 13; Duties & Taxes");
-            StringBuilder voucherTypeStringBuilder = new StringBuilder();
-            string prefix = "";
-            foreach (string voucherType in receiptUnderVoucherTypes)
-            {
-                String vouchertypeNAme = prefix + " ($Parent = \"" + voucherType + "\")";
-                voucherTypeStringBuilder.Append(vouchertypeNAme);
-                prefix = "or";
-            }
-            ENVELOPE tallyRequest = new ENVELOPE();
+			string parent = "Duties & Taxes";
+			//List<string> receiptUnderVoucherTypes = new List<string>(); 
+			//receiptUnderVoucherTypes.Add("Duties & Taxes");
+			//receiptUnderVoucherTypes.Add("GL 13; Duties & Taxes");
+			//         StringBuilder voucherTypeStringBuilder = new StringBuilder();
+			//         string prefix = "";
+			//         foreach (string voucherType in receiptUnderVoucherTypes)
+			//         {
+			//             String vouchertypeNAme = prefix + " ($Parent = \"" + voucherType + "\")";
+			//             voucherTypeStringBuilder.Append(vouchertypeNAme);
+			//             prefix = "or";
+			//         }
+			ENVELOPE tallyRequest = new ENVELOPE();
 			HEADER header = new HEADER();
 			header.VERSION = "1";
 			header.TALLYREQUEST = "Export";
@@ -213,18 +214,19 @@ namespace SNR_ClientApp.Tally.generateXml
 
 			
 			collectionsList.Add(collection);
-			List<String> filters = new List<string>();
-			filters.Add("ParentFilter");
-			collection.FILTERS = filters;
+			//List<String> filters = new List<string>();
+			//filters.Add("ParentFilter");
+			//collection.FILTERS = filters;
+			collection.childof = parent;
 			tdlmessage.COLLECTION = collectionsList;
-			List<SYSTEM> systems = new List<SYSTEM>();
+			//List<SYSTEM> systems = new List<SYSTEM>();
 
-			SYSTEM filter = new SYSTEM();
-			filter.NAME = "ParentFilter";
-			filter.TYPE = "Formulae";
-			filter.Text = voucherTypeStringBuilder.ToString();
-			systems.Add(filter);
-			tdlmessage.SYSTEM = systems;
+			//SYSTEM filter = new SYSTEM();
+			//filter.NAME = "ParentFilter";
+			//filter.TYPE = "Formulae";
+			//filter.Text = voucherTypeStringBuilder.ToString();
+			//systems.Add(filter);
+			//tdlmessage.SYSTEM = systems;
 			tdl.TDLMESSAGE = tdlmessage;
 			desc.TDL = tdl;
 			body.DESC = desc;

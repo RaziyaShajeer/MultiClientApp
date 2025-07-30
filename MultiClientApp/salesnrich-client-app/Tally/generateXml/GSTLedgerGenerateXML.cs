@@ -14,7 +14,7 @@ namespace SNR_ClientApp.Tally.generateXml
 	{
 		public static ENVELOPE GstLedgerGenerateXml(string parent)
 		{
-			List<string> receiptUnderVoucherTypes = new List<string>(); ;
+			List<string> receiptUnderVoucherTypes = new List<string>(); 
 			
 			StringBuilder voucherTypeStringBuilder = new StringBuilder();
 			
@@ -199,5 +199,118 @@ namespace SNR_ClientApp.Tally.generateXml
 			tallyRequest.BODY = body;
 			return tallyRequest;
 		}
+		public static ENVELOPE GstLedgerGenerateXmlcloud(string parent)
+		{
+			List<string> receiptUnderVoucherTypes = new List<string>();
+
+			StringBuilder voucherTypeStringBuilder = new StringBuilder();
+
+
+			String vouchertypeNAme = " ($Parent= \"" + parent + "\")";
+			voucherTypeStringBuilder.Append(vouchertypeNAme);
+
+
+			ENVELOPE tallyRequest = new ENVELOPE();
+			HEADER header = new HEADER();
+			header.VERSION = "1";
+			header.TALLYREQUEST = "Export";
+			header.TYPE = "Collection";
+			header.ID = "All Ledgers";
+			tallyRequest.HEADER = header;
+			BODY body = new();
+			DESC desc = new();
+			STATICVARIABLES staticvariables = new STATICVARIABLES();
+			staticvariables.EXPLODEFLAG = "Yes";
+			staticvariables.SVCURRENTCOMPANY = ApplicationProperties.properties["tally.company"].ToString();
+			staticvariables.SVEXPORTFORMAT = "$$SysName:XML";
+			staticvariables.IsItemWise = "Yes";
+			desc.STATICVARIABLES = staticvariables;
+			TDL tdl = new TDL();
+			TDLMESSAGE tdlmessage = new TDLMESSAGE();
+			
+
+			List<COLLECTION> collectionsList = new List<COLLECTION>();
+			COLLECTION collection = new COLLECTION();
+			collection.NAME = "All Ledgers";
+			collection.ISMODIFY = "No";
+			collection.ISFIXED = "No";
+			collection.ISINITIALIZE = "No";
+			collection.ISOPTION = "No";
+			collection.ISINTERNAL = "No";
+			List<String> types = new List<String>();
+			types.Add("Ledgers");
+			collection.TYPE = types;
+			collection.childof = parent;
+			List<String> fetch = new List<string>();
+			collection.FETCH = "NAME,PARENT,TAXTYPE,SUBTAXTYPE,RATEOFTAXCALCULATION,GSTDUTYHEAD";
+
+			collectionsList.Add(collection);
+
+			tdlmessage.COLLECTION = collectionsList;
+		
+
+			tdl.TDLMESSAGE = tdlmessage;
+			desc.TDL = tdl;
+			body.DESC = desc;
+			tallyRequest.BODY = body;
+			return tallyRequest;
+		}
+		public static ENVELOPE AllLedgerUndertheGroup(string parent)
+		{
+			List<string> receiptUnderVoucherTypes = new List<string>();
+
+			StringBuilder voucherTypeStringBuilder = new StringBuilder();
+
+
+			String vouchertypeNAme = " ($Parent= \"" + parent + "\")";
+			voucherTypeStringBuilder.Append(vouchertypeNAme);
+
+
+			ENVELOPE tallyRequest = new ENVELOPE();
+			HEADER header = new HEADER();
+			header.VERSION = "1";
+			header.TALLYREQUEST = "Export";
+			header.TYPE = "Collection";
+			header.ID = "All Ledgers";
+			tallyRequest.HEADER = header;
+			BODY body = new();
+			DESC desc = new();
+			STATICVARIABLES staticvariables = new STATICVARIABLES();
+			staticvariables.EXPLODEFLAG = "Yes";
+			staticvariables.SVCURRENTCOMPANY = ApplicationProperties.properties["tally.company"].ToString();
+			staticvariables.SVEXPORTFORMAT = "$$SysName:XML";
+			staticvariables.IsItemWise = "Yes";
+			desc.STATICVARIABLES = staticvariables;
+			TDL tdl = new TDL();
+			TDLMESSAGE tdlmessage = new TDLMESSAGE();
+
+
+			List<COLLECTION> collectionsList = new List<COLLECTION>();
+			COLLECTION collection = new COLLECTION();
+			collection.NAME = "All Ledgers";
+			collection.ISMODIFY = "No";
+			collection.ISFIXED = "No";
+			collection.ISINITIALIZE = "No";
+			collection.ISOPTION = "No";
+			collection.ISINTERNAL = "No";
+			List<String> types = new List<String>();
+			types.Add("Ledgers");
+			collection.TYPE = types;
+		
+			List<String> fetch = new List<string>();
+			collection.FETCH = "NAME,PARENT,TAXTYPE,SUBTAXTYPE,RATEOFTAXCALCULATION,GSTDUTYHEAD";
+
+			collectionsList.Add(collection);
+
+			tdlmessage.COLLECTION = collectionsList;
+
+
+			tdl.TDLMESSAGE = tdlmessage;
+			desc.TDL = tdl;
+			body.DESC = desc;
+			tallyRequest.BODY = body;
+			return tallyRequest;
+		}
 	}
+
 }

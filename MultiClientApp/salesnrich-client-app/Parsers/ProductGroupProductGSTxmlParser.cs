@@ -13,15 +13,18 @@ namespace SNR_ClientApp.Parsers
 		public List<GSTProductGroupWiseDTO> parseGstProductgroupparser(string tallyResponseXml)
 		{
 			var allGstProductGroup = new List<GSTProductGroupWiseDTO>();
-			tallyResponseXml = tallyResponseXml.Replace("&#4;", " ");
-			tallyResponseXml = tallyResponseXml.Replace("&apos;", "'");
-			tallyResponseXml = tallyResponseXml.Replace("&", "&");
+			tallyResponseXml = tallyResponseXml.Replace("&#13;", "")
+						   .Replace("&#10;", "")
+						   .Replace("&#4;", " ")
+						 ;
 
 			var doc = XDocument.Parse(tallyResponseXml);
 			var stockgroups = doc.Descendants("STOCKGROUP");
 			foreach (var item in stockgroups)
 			{
-			
+
+				var gratedTax = item.Element("INTEGRATEDTAX")?.Value ?? "";
+	
 
 
 				GSTProductGroupWiseDTO dto = new GSTProductGroupWiseDTO()
@@ -36,9 +39,13 @@ namespace SNR_ClientApp.Parsers
 
 
 				};
-				if(dto.integratedTax!="0")
+				if(!string.IsNullOrEmpty(dto.integratedTax))
 				{
-					allGstProductGroup.Add(dto);
+					if(dto.integratedTax!="0")
+					{
+						allGstProductGroup.Add(dto);
+					}
+		
 				}
 				
 			}

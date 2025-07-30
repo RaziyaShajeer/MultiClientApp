@@ -62,10 +62,21 @@ namespace SNR_ClientApp.Services
                 ReceivablePayableReportResponseParser receivablePayableReportResponseParser = new ReceivablePayableReportResponseParser();
 
                 HashSet<string> ledgerNames = receivablePayableReportResponseParser.parseReceivablePayableXmlToLedgerNames(BillsReceivablesResXml, ReceivablePayableType.Receivable);
-                List<ReceivablePayableDTO> pToServer = receivablePayableReportResponseParser.parseReceivablePayableDTOsXml(BillsPayablesResXml, ReceivablePayableType.Payable);
-                List<ReceivablePayableDTO> rpToServer = await findLedgerWiseOutStandingAsync(ledgerNames);
-
-                foreach (var pDto in pToServer)
+				LogManager.WriteLog("*****************LedgerName******");
+				var myContent = JsonConvert.SerializeObject(ledgerNames);
+				LogManager.WriteLog(ledgerNames.Count.ToString());
+				LogManager.WriteLog(myContent);
+				List<ReceivablePayableDTO> pToServer = receivablePayableReportResponseParser.parseReceivablePayableDTOsXml(BillsPayablesResXml, ReceivablePayableType.Payable);
+				LogManager.WriteLog("*****************PToServer******");
+				myContent = JsonConvert.SerializeObject(pToServer);
+				LogManager.WriteLog(pToServer.Count.ToString());
+				LogManager.WriteLog(myContent);
+				List<ReceivablePayableDTO> rpToServer = await findLedgerWiseOutStandingAsync(ledgerNames);
+				LogManager.WriteLog("*****************rToServer******");
+				myContent = JsonConvert.SerializeObject(rpToServer);
+                LogManager.WriteLog(rpToServer.Count.ToString());
+				LogManager.WriteLog(myContent);
+				foreach (var pDto in pToServer)
                 {
                     var opReceivalbes = rpToServer.Where(r => r.referenceDocumentNumber.Equals( pDto.referenceDocumentNumber) && pDto.referenceDocumentAmount == 0).FirstOrDefault();
                    // var duplicates = rpToServer.Where(r => r.referenceDocumentNumber.Equals(pDto.referenceDocumentNumber,StringComparison.OrdinalIgnoreCase)).FirstOrDefault();
@@ -85,12 +96,14 @@ namespace SNR_ClientApp.Services
                 {
 					TallyService tallyService= new TallyService();
 					List<AccountProfileDTO> allAccountProfilespTally= await tallyService.getAllLedgers();
+					LogManager.WriteLog("*********Ledger");
+					myContent = JsonConvert.SerializeObject(allAccountProfilespTally);
+					LogManager.WriteLog(allAccountProfilespTally.Count.ToString());
+					LogManager.WriteLog(myContent);
+					//				var accountProfileMap = allAccountProfilespTally
+					//.ToDictionary(data => data.name, data => data.customerId);
 
-
-                    //				var accountProfileMap = allAccountProfilespTally
-                    //.ToDictionary(data => data.name, data => data.customerId);
-
-                    var accountProfileMap = allAccountProfilespTally
+					var accountProfileMap = allAccountProfilespTally
     .GroupBy(data => data.name)
     .ToDictionary(group => group.Key, group => group.First().customerId);
 
@@ -103,6 +116,7 @@ namespace SNR_ClientApp.Services
 						})
 						.ToList();
 
+					LogManager.WriteLog("recievable Payable" + receivablePayableDTOToServer.Count);
 					res = upload(receivablePayableDTOToServer);
                 }
                 else
@@ -167,41 +181,70 @@ namespace SNR_ClientApp.Services
         }
 
         private async Task<List<ReceivablePayableDTO>> findLedgerWiseOutStandingAsync(HashSet<string> ledgerNames)
+
         {
-            Dictionary<String, String> outStandingResponseXMLs = new Dictionary<String, String>();
-            int i = 1;
-            foreach (String name in ledgerNames)
+            var notNames = new List<string>();
+			Dictionary<String, String> outStandingResponseXMLs = new Dictionary<String, String>();
+			int i = 1;
+			try
             {
-                if (!name.StartsWith("#") && !name.StartsWith("@") && !name.StartsWith("$"))
-                {
-                    ENVELOPE tallyRequest = new ENVELOPE();
-                    tallyRequest = getLedgerWiseOutstandingXml(name);
+				foreach (var namesof in ledgerNames)
+				{
+					LogManager.WriteLog("----" + namesof + "-----");
+				}
+				foreach (String name in ledgerNames)
+				{
+					LogManager.WriteLog("****************" + name);
+					if (!name.StartsWith("#") && !name.StartsWith("@") && !name.StartsWith("$"))
+					{
+						ENVELOPE tallyRequest = new ENVELOPE();
+						tallyRequest = getLedgerWiseOutstandingXml(name);
 
 
-                    var stringwriter = new System.IO.StringWriter();
-                    System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
-                    x.Serialize(stringwriter, tallyRequest);
+						var stringwriter = new System.IO.StringWriter();
+						System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
+						x.Serialize(stringwriter, tallyRequest);
 
-                    var BillsReceivablesResXml = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
-                    if(BillsReceivablesResXml != null)
-                    {
-                        outStandingResponseXMLs.TryAdd(name, BillsReceivablesResXml);
-                    }
+						var BillsReceivablesResXml = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
 
-                }
 
+						if (BillsReceivablesResXml != null)
+						{
+							outStandingResponseXMLs.TryAdd(name, BillsReceivablesResXml);
+						}
+                        else
+                        {
+                            notNames.Add(name);
+							LogManager.WriteLog("****************" + name);
+						}
+
+					}
+
+				}
+				LogManager.WriteLog("*****************NotNames******");
+				var myContent = JsonConvert.SerializeObject(notNames);
+				LogManager.WriteLog(notNames.Count.ToString());
+				LogManager.WriteLog(myContent);
+			}
+            catch(Exception ex)
+            {
+                LogManager.WriteLog(ex.Message);
             }
+       
+           
             return parseOutstanding(outStandingResponseXMLs);
         }
 
         private List<ReceivablePayableDTO> parseOutstanding(Dictionary<string, string> outStandingResponseXMLs)
         {
+            var count = 0;
             List<ReceivablePayableDTO> rToServer = new List<ReceivablePayableDTO>();
            
             foreach (var responseXML in outStandingResponseXMLs)
             {
                 if (responseXML.Value.Contains("????????"))
                 {
+                    count++;
                     continue;
                 }
 
