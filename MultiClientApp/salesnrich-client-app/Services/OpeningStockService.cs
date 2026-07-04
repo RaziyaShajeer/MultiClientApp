@@ -56,33 +56,33 @@ namespace SNR_ClientApp.Services
 
                 var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
 
-                ENVELOPE tallyRequest2 = new ENVELOPE();
-                tallyRequest2 = getCompanyNettStockAvilBatchWiseXml();
+               //ENVELOPE tallyRequest2 = new ENVELOPE();
+               // tallyRequest2 = getCompanyNettStockAvilBatchWiseXml();
 
 
-                var stringwriter2 = new System.IO.StringWriter();
+                //var stringwriter2 = new System.IO.StringWriter();
                 //System.Xml.Serialization.XmlSerializer x2 = new System.Xml.Serialization.XmlSerializer(tallyRequest2.GetType());
-                x.Serialize(stringwriter2, tallyRequest2);
+                //x.Serialize(stringwriter2, tallyRequest2);
 
-                TallyRequestResponse data2 = await tallyCommunicator.ExecXml(stringwriter2.ToString());
+                //TallyRequestResponse data2 = await tallyCommunicator.ExecXml(stringwriter2.ToString());
               
 
-                if (netstockAvil.Equals("true",StringComparison.OrdinalIgnoreCase))
-                {
-                    stockSummaryList = openingStockTallyMasterResponseParser
-                            .parseNetStockAvilableXml(data2);
-                }
+                //if (netstockAvil.Equals("true",StringComparison.OrdinalIgnoreCase))
+                //{
+                //    stockSummaryList = openingStockTallyMasterResponseParser
+                //            .parseNetStockAvilableXml(data2);
+                //}
 
                 List<OpeningStockDTO> opstkToServer = new List<OpeningStockDTO>();
                 List<OpeningStockDTO> opstkToServerTo = new List<OpeningStockDTO>();
                 List<ProductProfileDTO> stockItems=new List<ProductProfileDTO>();
-				tallyRequest = StockItemXml.getCompanystockitemXml();
-				var stringwriter1 = new System.IO.StringWriter();
-				System.Xml.Serialization.XmlSerializer x1 = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
-				x.Serialize(stringwriter1, tallyRequest);
+				//tallyRequest = StockItemXml.getCompanystockitemXml();
+				//var stringwriter1 = new System.IO.StringWriter();
+				//System.Xml.Serialization.XmlSerializer x1 = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
+				//x.Serialize(stringwriter1, tallyRequest);
 
-				var data1 = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter1.ToString());
-                stockItems = stockitemParser.ParseStockItemListXml(data1);
+				//var data1 = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter1.ToString());
+    //            stockItems = stockitemParser.ParseStockItemListXml(data1);
 			
                 if (key==null || key=="")
                 {
@@ -93,24 +93,25 @@ namespace SNR_ClientApp.Services
                 else
                 {
 
-                    opstkToServer = openingStockTallyMasterResponseParser.parseStockSummaryChangeOrderXml(data);
+                    opstkToServer = openingStockTallyMasterResponseParser.parseStockSummaryChangeOrderXmlWithKey(data);
 
-                    foreach (NetStockDetailsDTO netstock in stockSummaryList)
-                    {
-                        foreach (OpeningStockDTO opt in opstkToServer)
-                        {
+                    //foreach (NetStockDetailsDTO netstock in stockSummaryList)
+                    //{
+                    //    foreach (OpeningStockDTO opt in opstkToServer)
+                    //    {
                           
-                            if (netstock.productProfileName.Equals(opt.productProfileName, StringComparison.OrdinalIgnoreCase))
-                            {
-                                LogManager.WriteLog("presentelse");
-                                int netQuanty = netstock.itemQuantity - netstock.stockQuantity;
-                               LogManager.WriteLog(netstock.productProfileName + "====" + netstock.itemQuantity
-                                                    + "-" + netstock.stockQuantity + "=" + netQuanty);
-                                opt.quantity = netQuanty;
-                                opstkToServerTo.Add(opt);
-                            }
-                        }
-                    }
+                    //        if (netstock.productProfileName.Equals(opt.productProfileName, StringComparison.OrdinalIgnoreCase))
+                    //        {
+                    //            LogManager.WriteLog("presentelse");
+                    //            int netQuanty = netstock.itemQuantity - netstock.stockQuantity;
+                    //           LogManager.WriteLog(netstock.productProfileName + "====" + netstock.itemQuantity
+                    //                                + "-" + netstock.stockQuantity + "=" + netQuanty);
+                    //            opt.quantity = netQuanty;
+                            
+                    //            opstkToServerTo.Add(opt);
+                    //        }
+                    //    }
+                    //}
 
                 }
 
@@ -143,6 +144,9 @@ namespace SNR_ClientApp.Services
                         LogManager.WriteLog("netstock true");
                         if(opstkToServerTo.Count>0)
                          res=await  upload(opstkToServerTo);
+
+						var myContent = JsonConvert.SerializeObject(opstkToServerTo);
+						LogManager.WriteLog(myContent.ToString());
 						LogManager.WriteLog("opening stock:" + opstkToServer.Count);
 
 					}
@@ -615,18 +619,32 @@ namespace SNR_ClientApp.Services
                     stockLocationDTOs.Add(new StockLocationDTO(slocname));
                 }
             }
-            if (!ApplicationProperties.properties["IsEnableDistributor"].ToString().Equals("true",StringComparison.OrdinalIgnoreCase))
+
+            if (!ApplicationProperties.properties["IsEnableDistributor"].ToString().Equals("true",StringComparison.OrdinalIgnoreCase) )
             {
-                StockLocationDTO ob = new StockLocationDTO();
-                ob.name="Main Location";
-                ob.displayName="Main Location";
-                ob.stockLocationType = StockLocationType.ACTUAL;
-                ob.activated = true;
-                stockLocationDTOs.Add(ob);
+
+				bool mainLocationExists = stockLocationDTOs.Any(
+	   s => s.name.Equals("Main Location", StringComparison.OrdinalIgnoreCase)
+		 || s.displayName.Equals("Main Location", StringComparison.OrdinalIgnoreCase)
+   );
+				if (!mainLocationExists)
+				{
+					StockLocationDTO ob = new StockLocationDTO
+					{
+						name = "Main Location",
+						displayName = "Main Location",
+						stockLocationType = StockLocationType.ACTUAL,
+						activated = true
+					};
+
+					stockLocationDTOs.Add(ob);
+				}
+				
             }
 
         
             return stockLocationDTOs;
+        
         }
     }
 }

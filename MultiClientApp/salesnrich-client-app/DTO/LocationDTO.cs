@@ -13,12 +13,12 @@ namespace SNR_ClientApp.DTO
         public String name { get; set; }
         public String description { get; set; }
         public bool activated = true;
-		public string tallyCompanyName { get; set; }
+		public string tallyName { get; set; }
 
 
 		public LocationDTO()
         {
-			tallyCompanyName = ApplicationProperties.properties["tally.company"].ToString();
+			tallyName = ApplicationProperties.properties["tally.company"].ToString();
 		}
         public LocationDTO(String name, String description)
         {
@@ -26,7 +26,7 @@ namespace SNR_ClientApp.DTO
             this.name = name;
             this.description = description;
             this.activated = true;
-			tallyCompanyName = ApplicationProperties.properties["tally.company"].ToString();
+			tallyName = ApplicationProperties.properties["tally.company"].ToString();
 
 		}
 

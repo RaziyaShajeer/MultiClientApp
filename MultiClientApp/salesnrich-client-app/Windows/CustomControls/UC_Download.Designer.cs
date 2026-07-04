@@ -347,6 +347,7 @@
 			Controls.Add(DownloadTabMainPanel);
 			Name = "UC_Download";
 			Size = new Size(800, 575);
+			Load += UC_Download_Load;
 			DownloadTabMainPanel.ResumeLayout(false);
 			flowLayoutPanel1.ResumeLayout(false);
 			panel3.ResumeLayout(false);

@@ -69,17 +69,20 @@ namespace SNR_ClientApp.Services
                 //{
                 //    //					List<AccountProfileDTO> apFile = fileManagerService.readObjectFromFile(FILE_NAME,
                 //							AccountProfileDTO.class);
+                //			
                 //					apToServer = findNewAndDeletedAccountProfiles(apTally, apFile);
                 apToServer = apTally;
-                //}
-                //else
-                //{
-                //    fileManagerService.createApplicationDirectories();
-                //    apToServer = apTally;
-                //}
+				myContent = JsonConvert.SerializeObject(apToServer);
+				LogManager.WriteLog(myContent.ToString());
+				//}
+				//else
+				//{
+				//    fileManagerService.createApplicationDirectories();
+				//    apToServer = apTally;
+				//}
 
 
-                if (apToServer.Count > 0)
+				if (apToServer.Count > 0)
                 {
                     upload(apToServer);
 					LogManager.WriteLog("GroupWise Account Upload" + apToServer.Count);

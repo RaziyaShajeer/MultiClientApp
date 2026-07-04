@@ -16,6 +16,7 @@ using SNR_ClientApp.Enums;
 using SNR_ClientApp.Services;
 using SNR_ClientApp.DTO;
 using SNR_ClientApp.Windows.CustomControls;
+using System.Net.Http;
 
 namespace SNR_ClientApp.Tally
 {
@@ -496,7 +497,8 @@ namespace SNR_ClientApp.Tally
             LogManager.WriteLog("Get request to Tally - \n XML : " + xmlQuery);
             TallyRequestResponse Tallyresponse = new TallyRequestResponse();
             HttpClient client = new HttpClient();
-            client.BaseAddress = new Uri(props.GetValueOrDefault("tally.full.url").ToString());
+			client.Timeout = TimeSpan.FromMinutes(10);
+			client.BaseAddress = new Uri(props.GetValueOrDefault("tally.full.url").ToString());
 
             HttpContent inputContent = new StringContent(xmlQuery, Encoding.UTF8, "text/xml");
             try

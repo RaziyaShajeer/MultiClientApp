@@ -86,6 +86,9 @@ namespace SNR_ClientApp.Services
                 if (plPLLDto.priceLevelDtos.Count>0)
                 {
                     uploadPricelevel(plPLLDto.priceLevelDtos);
+					var myContent = JsonConvert.SerializeObject(plPLLDto.priceLevelDtos);
+					LogManager.WriteLog(myContent.ToString());
+					
 					LogManager.WriteLog("pricelevel:" + plPLLDto.priceLevelDtos.Count);
 				}
                 if (plPLLDto.priceLevelListDtos.Count>0)
@@ -119,7 +122,8 @@ namespace SNR_ClientApp.Services
 
                 LogManager.WriteLog("uploading PRICE_LIST_LEVEL_LIST started...\n" + "Api  : " + requestUri);
                 httpClient = RestClientUtil.getClient();
-                var myContent = JsonConvert.SerializeObject(list);
+				httpClient.Timeout = TimeSpan.FromMinutes(10);
+				var myContent = JsonConvert.SerializeObject(list);
                 HttpContent inputContent = new StringContent(myContent, Encoding.UTF8, "application/json");
 
                 var responseTask = await httpClient.PostAsync(requestUri, inputContent);
@@ -129,8 +133,8 @@ namespace SNR_ClientApp.Services
                // HttpResponseMessage Res = responseTask.Result;
                 LogManager.WriteLog("Uploading PriceLevelList To Server Completed ....\n Response : ");
                 LogManager.WriteResponseLog(responseTask);
-
-                if (responseTask.IsSuccessStatusCode)
+			
+				if (responseTask.IsSuccessStatusCode)
                 {
                     LogManager.WriteLog("request for uploading PRICE_LIST_LEVEL_LIST  Success..");
 					var response = await responseTask.Content.ReadAsStringAsync();
@@ -158,21 +162,22 @@ namespace SNR_ClientApp.Services
 
 				LogManager.WriteLog("uploading PRICE_LEVEL started...\n" + "Api  : " + requestUri);
                 httpClient = RestClientUtil.getClient();
+              
                 var myContent = JsonConvert.SerializeObject(list);
                 HttpContent inputContent = new StringContent(myContent, Encoding.UTF8, "application/json");
 
-                var responseTask = await httpClient.PostAsync(requestUri, inputContent);
+                var responseTask =  httpClient.PostAsync(requestUri, inputContent);
 
-                //responseTask.Wait();
+                responseTask.Wait();
 
-                //HttpResponseMessage Res = responseTask.Result;
+                HttpResponseMessage Res = responseTask.Result;
                 LogManager.WriteLog("Uploading PriceLevel To Server Completed ....\n Response : ");
-                LogManager.WriteResponseLog(responseTask);
+                LogManager.WriteResponseLog(Res);
 
-                if (responseTask.IsSuccessStatusCode)
+                if (Res.IsSuccessStatusCode)
                 {
                     LogManager.WriteLog("request for uploading PRICE_LEVEL  Success..");
-                    var response = responseTask.Content.ReadAsStringAsync().Result;
+                    var response = Res.Content.ReadAsStringAsync().Result;
                 }
                 else
                 {

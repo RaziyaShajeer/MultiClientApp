@@ -45,7 +45,7 @@ namespace SNR_ClientApp.Tally
                 try
                 {
 					var ns = new XmlSerializerNamespaces();
-					ns.Add("UDF", "http://schemas.sdk"); // prefix "UDF" maps to your namespace URI
+					ns.Add("UDF", "TallyUDF"); // prefix "UDF" maps to your namespace URI
 
 					var serializer = new XmlSerializer(tallyRequest.xmlObj.GetType());
 					var stringwriter = new StringWriter();
@@ -118,23 +118,23 @@ namespace SNR_ClientApp.Tally
                     //return new TallyResponse("OK", "Orders post to tally failed", successOrders);
                 }
             }
-            foreach (var masterId in masterIds)
-            {
-                ENVELOPE voucherIds = await salesOrderGenerateXmlfromMaster.GenerateSalesOrderVoucherNumberfromMastrerId(masterId.Key.ToString());
-                var stringwriter = new System.IO.StringWriter();
-                System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(voucherIds.GetType());
-                x.Serialize(stringwriter, voucherIds);
+            //foreach (var masterId in masterIds)
+            //{
+            //    ENVELOPE voucherIds = await salesOrderGenerateXmlfromMaster.GenerateSalesOrderVoucherNumberfromMastrerId(masterId.Key.ToString());
+            //    var stringwriter = new System.IO.StringWriter();
+            //    System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(voucherIds.GetType());
+            //    x.Serialize(stringwriter, voucherIds);
 
-                var voucherIdListquery = await tallyCommunicator.ExecXml(stringwriter.ToString());
-                SalesStatusDTO salesOrderDetails = new SalesStatusDTO();
-                foreach (var voucher in voucherIdListquery.response.BODY.DATA.COLLECTION.VOUCHER)
-                {
-                    salesOrderDetails.invPid=masterId.Value;
-                    salesOrderDetails.voucherNo=voucher.VOUCHERNUMBER;
+            //    var voucherIdListquery = await tallyCommunicator.ExecXml(stringwriter.ToString());
+            //    SalesStatusDTO salesOrderDetails = new SalesStatusDTO();
+            //    foreach (var voucher in voucherIdListquery.response.BODY.DATA.COLLECTION.VOUCHER)
+            //    {
+            //        salesOrderDetails.invPid=masterId.Value;
+            //        salesOrderDetails.voucherNo=voucher.VOUCHERNUMBER;
 
-                    salesStatusDTOS.Add(salesOrderDetails);
-                }
-            }
+            //        salesStatusDTOS.Add(salesOrderDetails);
+            //    }
+            //}
 
             //object wrappedObject = salesStatusDTOS;
             LogManager.WriteLog(salesStatusDTOS.ToString());

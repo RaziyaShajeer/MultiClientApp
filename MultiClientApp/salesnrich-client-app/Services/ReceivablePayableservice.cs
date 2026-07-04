@@ -71,7 +71,11 @@ namespace SNR_ClientApp.Services
 				myContent = JsonConvert.SerializeObject(pToServer);
 				LogManager.WriteLog(pToServer.Count.ToString());
 				LogManager.WriteLog(myContent);
+                var starttime = DateTime.Now;
 				List<ReceivablePayableDTO> rpToServer = await findLedgerWiseOutStandingAsync(ledgerNames);
+                var endTime = DateTime.Now;
+                var timediff = endTime - starttime;
+				LogManager.WriteLog("*****************Time is******"+timediff);
 				LogManager.WriteLog("*****************rToServer******");
 				myContent = JsonConvert.SerializeObject(rpToServer);
                 LogManager.WriteLog(rpToServer.Count.ToString());
@@ -94,29 +98,29 @@ namespace SNR_ClientApp.Services
 
 				if (rpToServer.Count > 0)
                 {
-					TallyService tallyService= new TallyService();
-					List<AccountProfileDTO> allAccountProfilespTally= await tallyService.getAllLedgers();
-					LogManager.WriteLog("*********Ledger");
-					myContent = JsonConvert.SerializeObject(allAccountProfilespTally);
-					LogManager.WriteLog(allAccountProfilespTally.Count.ToString());
-					LogManager.WriteLog(myContent);
-					//				var accountProfileMap = allAccountProfilespTally
-					//.ToDictionary(data => data.name, data => data.customerId);
+				//	TallyService tallyService= new TallyService();
+				//	List<AccountProfileDTO> allAccountProfilespTally= await tallyService.getAllLedgers();
+				//	LogManager.WriteLog("*********Ledger");
+				//	myContent = JsonConvert.SerializeObject(allAccountProfilespTally);
+				//	LogManager.WriteLog(allAccountProfilespTally.Count.ToString());
+				//	LogManager.WriteLog(myContent);
+				//	//				var accountProfileMap = allAccountProfilespTally
+				//	//.ToDictionary(data => data.name, data => data.customerId);
 
-					var accountProfileMap = allAccountProfilespTally
-    .GroupBy(data => data.name)
-    .ToDictionary(group => group.Key, group => group.First().customerId);
+				//	var accountProfileMap = allAccountProfilespTally
+    //.GroupBy(data => data.name)
+    //.ToDictionary(group => group.Key, group => group.First().customerId);
 
-                    receivablePayableDTOToServer = rpToServer
-						.Where(pDto => accountProfileMap.ContainsKey(pDto.accountName))
-						.Select(pDto =>
-						{
-							pDto.customerId = accountProfileMap[pDto.accountName];
-							return pDto;
-						})
-						.ToList();
+    //                receivablePayableDTOToServer = rpToServer
+				//		.Where(pDto => accountProfileMap.ContainsKey(pDto.accountName))
+				//		.Select(pDto =>
+				//		{
+				//			pDto.customerId = accountProfileMap[pDto.accountName];
+				//			return pDto;
+				//		})
+				//		.ToList();
 
-					LogManager.WriteLog("recievable Payable" + receivablePayableDTOToServer.Count);
+				//	LogManager.WriteLog("recievable Payable" + receivablePayableDTOToServer.Count);
 					res = upload(receivablePayableDTOToServer);
                 }
                 else
@@ -188,10 +192,7 @@ namespace SNR_ClientApp.Services
 			int i = 1;
 			try
             {
-				foreach (var namesof in ledgerNames)
-				{
-					LogManager.WriteLog("----" + namesof + "-----");
-				}
+				
 				foreach (String name in ledgerNames)
 				{
 					LogManager.WriteLog("****************" + name);

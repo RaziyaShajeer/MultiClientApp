@@ -56,7 +56,7 @@ namespace SNR_ClientApp.Config
 	
 	// account wise details
 	public static readonly String LOCATION = "/locationsUpdateIdmulticompany.json";
-	public static readonly String LOCATION_HIERARCHY = "/location-hierarchyUpdateIdmulticompany.json\r\n";
+	public static readonly String LOCATION_HIERARCHY = "/location-hierarchyUpdateIdmulticompany.json";
 	public static readonly String ACCOUNT_PROFILE = "/account-profiles-alterid.json";
 	public static readonly String ACCOUNT_PROFILE_CLOSING_BALANCE = "/account-profiles-closing-balance.json";//SNR_CLIENT_CBAP_1
 		public static readonly String LOCATION_ACCOUNT_PROFILE = "/location-account-profileUpdateIdMultiCompany.json";//SNR_CLIENT_GA_RP_1

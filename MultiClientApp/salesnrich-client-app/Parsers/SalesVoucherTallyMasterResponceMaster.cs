@@ -111,7 +111,7 @@ namespace SNR_ClientApp.Parsers
                     //double documentTotal = accountingVoucherHeaderDTOs[0].totalAmount;
                     //  accountingVoucherHeaderDTOs[0].totalAmount = (documentTotal + toatalAmount);
 
-                }
+                }   
 
 
                     return inventoryVoucherHeaderDTOs;

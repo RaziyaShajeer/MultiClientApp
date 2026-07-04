@@ -168,7 +168,7 @@ namespace SNR_ClientApp.Services
                         
                                 ledger.tallyLedgerType=tallyLedger;
                                 sundryChild.Add(ledger);
-                                flag = 1;
+                            
                                 break;
                                 //							System.out.println("123"+sundryChild.size());
                             }

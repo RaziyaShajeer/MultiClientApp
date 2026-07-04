@@ -56,29 +56,19 @@ namespace SNR_ClientApp.Services
 				var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
 				List<VoucherTypeDTO> voucherTypes = new List<VoucherTypeDTO>();
 				 voucherTypes   = await VoucherTypeResponseParser.GetAllvoucherType(data, vouchertypeName);
-				DataTable response = new DataTable();
-                StringBuilder Query = new StringBuilder();
+				//DataTable response = new DataTable();
+    //            StringBuilder Query = new StringBuilder();
 
-                Query.Append("select $name,$Parent  from " + Tables.VoucherType + " where $Parent= " + vouchertypeName);
+    //            Query.Append("select $name,$Parent  from " + Tables.VoucherType + " where $Parent= " + vouchertypeName);
 
-                response = await tallyCommunicator.getdatatable(Query.ToString());
+    //            response = await tallyCommunicator.getdatatable(Query.ToString());
 
 
-                if (response.Rows.Count > 0)
-                {
-                 //   List<InventoryVoucherHeaderDTO> inventoryVoucherHeaderDTOs = new List<InventoryVoucherHeaderDTO>();
+               
+                              //   List<InventoryVoucherHeaderDTO> inventoryVoucherHeaderDTOs = new List<InventoryVoucherHeaderDTO>();
                    
 
-                    foreach (DataRow dr in response.Rows)
-                    {
-                        VoucherTypeDTO dto = new VoucherTypeDTO();
-                        dto.parent = (dr["$Parent"] != DBNull.Value) ? (string)dr["$Parent"] : "";
-                        dto.name = (dr["$name"] != DBNull.Value) ? (string)dr["$name"] : "";
-
-
-                        voucherTypes.Add(dto);
-
-                    }
+                  
                     if (voucherTypes.Count > 0)
                     {
                         // selected date generated sales Ledger names.
@@ -135,7 +125,7 @@ namespace SNR_ClientApp.Services
 
 
 
-                }
+                
             }
             catch (Exception ex)
             {

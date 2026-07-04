@@ -113,6 +113,7 @@ namespace SNR_ClientApp.Properties
             }
    
 
+        
         }
 
 		public static Dictionary<string, Object> getAllProperties(string? companyName)

@@ -25,7 +25,7 @@ namespace SNR_ClientApp.DTO
         //todo check with server 
         //added for getting discount
         public double discount { get; set; }
-		public string tallycompanyName { get; set; }
+		public String tallycompanyName { get; set; }
 		public PriceLevelListDTO()
         {
 

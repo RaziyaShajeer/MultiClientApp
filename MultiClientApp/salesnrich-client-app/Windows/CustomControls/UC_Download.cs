@@ -257,7 +257,7 @@ namespace SNR_ClientApp.Windows.CustomControls
 
 				ParentForm.Cursor = Cursors.WaitCursor;
 				this.Cursor = Cursors.WaitCursor;
-
+				 
 				//DateTime dd = salesDate.Value.Date;
 				//DateOnly dateOnly = DateOnly.FromDateTime(dd);
 				if (enableDateWise.Equals("true", StringComparison.OrdinalIgnoreCase))
@@ -388,7 +388,6 @@ namespace SNR_ClientApp.Windows.CustomControls
 				}
 				else
 				{
-
 					appendLogMessage("Download journal started.");
 					await downloadJournalService.getFromServerAndDownloadToTallyAsync(salesDate.Value, uC_Logger);
 
@@ -922,12 +921,12 @@ namespace SNR_ClientApp.Windows.CustomControls
 
 		private void companySelect_SelectedIndexChanged(object sender, EventArgs e)
 		{
-				StringUtilsCustom.TALLY_COMPANY = companySelect.Text;
+			StringUtilsCustom.TALLY_COMPANY = companySelect.Text;
 
-				ApplicationProperties.getAllProperties(StringUtilsCustom.TALLY_COMPANY);
+			ApplicationProperties.getAllProperties(StringUtilsCustom.TALLY_COMPANY);
 
-				ApplicationProperties.properties["tally.company"] = companySelect.Text;
-				ApplicationProperties.updatePropertiesFile(StringUtilsCustom.TALLY_COMPANY);
+			ApplicationProperties.properties["tally.company"] = companySelect.Text;
+			ApplicationProperties.updatePropertiesFile(StringUtilsCustom.TALLY_COMPANY);
 		}
 
 		private void flowLayoutPanel1_Paint_1(object sender, PaintEventArgs e)
@@ -936,6 +935,11 @@ namespace SNR_ClientApp.Windows.CustomControls
 		}
 
 		private void employeeList_SelectedIndexChanged(object sender, EventArgs e)
+		{
+
+		}
+
+		private void UC_Download_Load(object sender, EventArgs e)
 		{
 
 		}

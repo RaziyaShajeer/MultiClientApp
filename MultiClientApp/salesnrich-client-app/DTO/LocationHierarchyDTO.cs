@@ -12,12 +12,12 @@ namespace SNR_ClientApp.DTO
         public String locationName { get; set; }
 
         public String parentName { get; set; }
-		public string tallyCompanyName { get; set; }
+		public string tallyCompanyNmae { get; set; }
 		public LocationHierarchyDTO(LocationDTO locationDTO)
         {
             this.locationName = locationDTO.name;
             this.parentName = locationDTO.description;
-			tallyCompanyName = ApplicationProperties.properties["tally.company"].ToString();
+			tallyCompanyNmae = ApplicationProperties.properties["tally.company"].ToString();
 		}
     }
 }

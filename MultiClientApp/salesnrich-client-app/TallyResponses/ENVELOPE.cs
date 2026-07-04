@@ -10,15 +10,18 @@ using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
 
 namespace SNR_ClientApp.TallyResponses
 {
-    // using System.Xml.Serialization;
-    // XmlSerializer serializer = new XmlSerializer(typeof(ENVELOPE));
-    // using (StringReader reader = new StringReader(xml))
-    // {
-    //    var test = (ENVELOPE)serializer.Deserialize(reader);
-    // }
+	// using System.Xml.Serialization;
+	// XmlSerializer serializer = new XmlSerializer(typeof(ENVELOPE));
+	// using (StringReader reader = new StringReader(xml))
+	// {
+	//    var test = (ENVELOPE)serializer.Deserialize(reader);
+	// }
 
-
-    public class TallyRequestResponse
+	public class NAMEELEMENT
+	{
+		public string NAME { get; set; }
+	}
+	public class TallyRequestResponse
     {
 
         public ENVELOPE response = new ENVELOPE();

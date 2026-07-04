@@ -12,10 +12,10 @@ namespace SNR_ClientApp.DTO
         public List<PriceLevelDTO> priceLevelDtos { get; set; }
 
         public List<PriceLevelListDTO> priceLevelListDtos { get; set; }
-		public string tallyCompanyName { get; set; }
+		public string tallyCompany { get; set; }
 		public PriceLevelPriceLevelList()
 		{
-			tallyCompanyName = ApplicationProperties.properties["tally.company"].ToString();
+			tallyCompany = ApplicationProperties.properties["tally.company"].ToString();
 		}
 		public PriceLevelPriceLevelList(List<PriceLevelDTO> priceLevelDtos, List<PriceLevelListDTO> priceLevelListDtos)
         {

@@ -17,10 +17,10 @@ namespace SNR_ClientApp.DTO
         public DateTime lastModifiedDate;
         //Customer Id Added 
         public String customer_id { get; set; }
-		public string tallyCompanyName { get; set; }
+		public string tallycompanyName { get; set; }
         public LocationAccountProfileDTO()
         {
-			tallyCompanyName = ApplicationProperties.properties["tally.company"].ToString();
+			tallycompanyName = ApplicationProperties.properties["tally.company"].ToString();
 		}
 	}
 }

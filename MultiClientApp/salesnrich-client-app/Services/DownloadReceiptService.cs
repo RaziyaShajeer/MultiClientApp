@@ -552,7 +552,7 @@ namespace SNR_ClientApp.Services
                   
 
                     voucher.VOUCHERTYPENAME = receiptVoucherTypeCash;
-                    voucher.VOUCHERNUMBER = receiptDTO.provisionalReceiptNo != null ? receiptDTO.provisionalReceiptNo : "1";
+                    voucher.VOUCHERNUMBER = (!string.IsNullOrEmpty(receiptDTO.provisionalReceiptNo)) ? receiptDTO.provisionalReceiptNo : "1";
                     //  
 
                 }
@@ -582,7 +582,7 @@ namespace SNR_ClientApp.Services
                    
 
                     voucher.VOUCHERTYPENAME = receiptVoucherTypeBank;
-                    voucher.VOUCHERNUMBER = (receiptDTO.provisionalReceiptNo != null ? receiptDTO.provisionalReceiptNo : "1");
+                    voucher.VOUCHERNUMBER = !string.IsNullOrEmpty(receiptDTO.provisionalReceiptNo)? receiptDTO.provisionalReceiptNo : "1";
 
                 }
                 else if (receiptDTO.mode == PaymentMode.RTGS)
@@ -610,7 +610,7 @@ namespace SNR_ClientApp.Services
                 }
 
                     voucher.VOUCHERTYPENAME = receiptVoucherTypeBank;
-                    voucher.VOUCHERNUMBER = (receiptDTO.provisionalReceiptNo != null ? receiptDTO.provisionalReceiptNo : "1");
+                    voucher.VOUCHERNUMBER = !string.IsNullOrEmpty(receiptDTO.provisionalReceiptNo) ? receiptDTO.provisionalReceiptNo : "1";
 
                 }
 

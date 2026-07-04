@@ -148,6 +148,7 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
 					ApplicationProperties.updatePropertiesFile(StringUtilsCustom.TALLY_COMPANY);
 					if (ApplicationProperties.properties["isFirstTimeCompanyLogin"].ToString().Equals("True", StringComparison.OrdinalIgnoreCase))
 					{
+
 						ApplicationProperties.getPropertyFromServer();
 					}
 					StringUtilsCustom.TALLY_COMPANY = companySelect.Text;
