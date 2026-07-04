@@ -54,49 +54,50 @@ namespace SNR_ClientApp.Services
                 {
                     upload(ppToServer);
                 }
+				LogManager.WriteLog("Default Ledger wise Product Profile" + ppToServer.Count);
 
-                //prev code using odbc
-                //DataTable response = new DataTable();
-                //StringBuilder Query = new StringBuilder();
-                //Query.Append("select $Parent,$Name,$TAXCLASSIFICATIONNAME,$alterid from " + Tables.StockItem);
+				//prev code using odbc
+				//DataTable response = new DataTable();
+				//StringBuilder Query = new StringBuilder();
+				//Query.Append("select $Parent,$Name,$TAXCLASSIFICATIONNAME,$alterid from " + Tables.StockItem);
 
-                //response = tallyCommunicator.getdatatable(Query.ToString());
+				//response = tallyCommunicator.getdatatable(Query.ToString());
 
-                //List<VatLedgerDTO> vatLedgerDTOs = vatLedgerService.getFromTallyAndUpload();
-                //if (response.Rows.Count > 0)
-                //{
-                //    List<ProductProfileDTO> _list = new List<ProductProfileDTO>();
+				//List<VatLedgerDTO> vatLedgerDTOs = vatLedgerService.getFromTallyAndUpload();
+				//if (response.Rows.Count > 0)
+				//{
+				//    List<ProductProfileDTO> _list = new List<ProductProfileDTO>();
 
-                //    foreach (DataRow dr in response.Rows)
-                //    {
-                //        ProductProfileDTO productProfileDTo = new ProductProfileDTO();
+				//    foreach (DataRow dr in response.Rows)
+				//    {
+				//        ProductProfileDTO productProfileDTo = new ProductProfileDTO();
 
-                //        productProfileDTo.name = (dr["$name"] != DBNull.Value) ? (string)dr["$name"] : "";
-                //        productProfileDTo.description = (dr["$parent"] != DBNull.Value) ? (string)dr["$parent"] : "";
-                //        string TCName = (dr["$TAXCLASSIFICATIONNAME"] != DBNull.Value) ? (string)dr["$TAXCLASSIFICATIONNAME"] : "";
-                //        foreach (VatLedgerDTO vat in vatLedgerDTOs)
-                //        {
-                //            if (vat.vatClass.Equals(TCName, StringComparison.OrdinalIgnoreCase))
-                //            {
-                //                productProfileDTo.taxRate = vat.percentageOfCalculation;
-                //            }
-                //        }
-                //        productProfileDTo.alterId = (dr["$alterid"] != DBNull.Value) ? (StringUtilsCustom.ExtractDoubleValue(dr["$alterid"].ToString())) : 0;
+				//        productProfileDTo.name = (dr["$name"] != DBNull.Value) ? (string)dr["$name"] : "";
+				//        productProfileDTo.description = (dr["$parent"] != DBNull.Value) ? (string)dr["$parent"] : "";
+				//        string TCName = (dr["$TAXCLASSIFICATIONNAME"] != DBNull.Value) ? (string)dr["$TAXCLASSIFICATIONNAME"] : "";
+				//        foreach (VatLedgerDTO vat in vatLedgerDTOs)
+				//        {
+				//            if (vat.vatClass.Equals(TCName, StringComparison.OrdinalIgnoreCase))
+				//            {
+				//                productProfileDTo.taxRate = vat.percentageOfCalculation;
+				//            }
+				//        }
+				//        productProfileDTo.alterId = (dr["$alterid"] != DBNull.Value) ? (StringUtilsCustom.ExtractDoubleValue(dr["$alterid"].ToString())) : 0;
 
-                //        _list.Add(productProfileDTo);
+				//        _list.Add(productProfileDTo);
 
-                //    }
-
-
+				//    }
 
 
-                //    if (_list.Count > 0)
-                //    {
-                //        upload(_list);
-                //    }
-                //    //fileManagerService.writeObjectToFile(apTally, FILE_NAME);
-                //}
-            }
+
+
+				//    if (_list.Count > 0)
+				//    {
+				//        upload(_list);
+				//    }
+				//    //fileManagerService.writeObjectToFile(apTally, FILE_NAME);
+				//}
+			}
             catch(Exception ex)
             {
 				LogManager.HandleException(ex);

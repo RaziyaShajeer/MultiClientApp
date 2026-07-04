@@ -58,8 +58,10 @@ namespace SNR_ClientApp.Tally.generateXml
         private String enableReceiptVoucherType = ApplicationProperties.properties["enable.receipt.voucherType"].ToString();
         private String godownInSales= ApplicationProperties.properties["godown.in.sales.receipt"].ToString();
         private string godownName=ApplicationProperties.properties["godownName"].ToString();
+   
+   private string batchNamep= ApplicationProperties.properties["batchName"].ToString();
 
-        public String cessLedger = ApplicationProperties.properties["Cess.ledger.name"].ToString();
+		public String cessLedger = ApplicationProperties.properties["Cess.ledger.name"].ToString();
         private String donloadVehicleDetails = ApplicationProperties.properties["downloadVehicleDetails"].ToString();
 
         //for discount ledger
@@ -79,7 +81,19 @@ namespace SNR_ClientApp.Tally.generateXml
             apiUrl = ApplicationProperties.properties["service.full.url"].ToString();
             byEmpVoucher = ApplicationProperties.properties["download.by.employee.voucher"].ToString();
             userStockLocation = ApplicationProperties.properties["user.stockLocation"].ToString();
-        }
+            if (string.IsNullOrEmpty(godownName))
+            {
+                LogManager.WriteLog(godownName);
+    //            godownName = godownName.Replace("&", "&amp;");
+				//LogManager.WriteLog(godownName);
+			}
+			if (string.IsNullOrEmpty(batchNamep))
+			{
+				LogManager.WriteLog(batchFixed);
+				//batchNamep = batchNamep.Replace("&", "&amp;");
+				//LogManager.WriteLog(batchFixed);
+			}
+		}
         public async Task<ENVELOPE> generateSalesOrderXml(SalesOrderDTO config)
         {
 
@@ -88,7 +102,10 @@ namespace SNR_ClientApp.Tally.generateXml
             //{
             string trimChar = config.trimChar == null ? "" : config.trimChar;
             string ledgerName = config.ledgerName + trimChar;
-            string companyName = ApplicationProperties.properties["tally.company"].ToString();
+			if (ledgerName.Contains('~'))
+				ledgerName = ledgerName.Split('~')[0];
+			//ledgerName = ledgerName.Replace("&", "&amp;");
+			string companyName = ApplicationProperties.properties["tally.company"].ToString();
 
             string uuid = Guid.NewGuid().ToString();
             char[] str = uuid.ToCharArray();
@@ -710,7 +727,7 @@ namespace SNR_ClientApp.Tally.generateXml
             //    aLLINVENTORYENTRIESLIST.BASICUSERDESCRIPTIONLIST = bASICUSERDESCRIPTIONLIST;
 
             //}
-            aLLINVENTORYENTRIESLIST.STOCKITEMNAME = salesOrder.itemName+trimChar;
+            aLLINVENTORYENTRIESLIST.STOCKITEMNAME = salesOrder.productName+trimChar;
             aLLINVENTORYENTRIESLIST.SUBCATEGORY = "+ VAT";
             aLLINVENTORYENTRIESLIST.ISDEEMEDPOSITIVE = "No";
             aLLINVENTORYENTRIESLIST.ISLASTDEEMEDPOSITIVE = "No";
@@ -762,22 +779,22 @@ namespace SNR_ClientApp.Tally.generateXml
             {
                 aLLINVENTORYENTRIESLIST.DISCOUNT = salesOrder.itemDiscount;
             }
-			if (ApplicationProperties.properties["SchemeDiscountEnabled"].ToString().Equals("true", StringComparison.OrdinalIgnoreCase)
-	  && salesOrder.discountAmount != 0)
-			{
-				var SDKBBDISCAMT_LIST = new SDKBBDISCAMT_LIST();
-				SDKBBDISCAMT_LIST.SDKBBDISCAMT = new SDKBBDISCAMT_VALUE
-				{
-					Value = salesOrder.discountAmount,
-					DESC = "`SdkBBDiscAmt`"
-				};
-				SDKBBDISCAMT_LIST.TYPE = "Number";
-				SDKBBDISCAMT_LIST.ISLIST = "YES";
-				SDKBBDISCAMT_LIST.INDEX = "14752";
-				SDKBBDISCAMT_LIST.DESC = "`SdkBBDiscAmt`";
+			//if (ApplicationProperties.properties["SchemeDiscountEnabled"].ToString().Equals("true", StringComparison.OrdinalIgnoreCase)
+	  //&& salesOrder.discountAmount != 0)
+			//{
+			//	var SDKBBDISCAMT_LIST = new SDKBBDISCAMT_LIST();
+			//	SDKBBDISCAMT_LIST.SDKBBDISCAMT = new SDKBBDISCAMT_VALUE
+			//	{
+			//		Value = salesOrder.discountAmount,
+			//		DESC = "`SdkBBDiscAmt`"
+			//	};
+			//	SDKBBDISCAMT_LIST.TYPE = "Number";
+			//	SDKBBDISCAMT_LIST.ISLIST = "YES";
+			//	SDKBBDISCAMT_LIST.INDEX = "14752";
+			//	SDKBBDISCAMT_LIST.DESC = "`SdkBBDiscAmt`";
 
-				aLLINVENTORYENTRIESLIST.SDKBBDISCAMT_LIST = SDKBBDISCAMT_LIST;
-			}
+			//	aLLINVENTORYENTRIESLIST.SDKBBDISCAMT_LIST = SDKBBDISCAMT_LIST;
+			//}
 
 
 			double discountAmount = 0;
@@ -899,7 +916,9 @@ namespace SNR_ClientApp.Tally.generateXml
             {
                 if ("true".Equals(godownFixed,StringComparison.OrdinalIgnoreCase))
                 {
+                    godownName = godownName.Replace("&#4;", "&#4;");
                     salesOrder.stockLocationName=godownName;
+
                 }
 
                 if (String.IsNullOrEmpty(salesOrder.sourceStockLocationName))
@@ -930,7 +949,8 @@ namespace SNR_ClientApp.Tally.generateXml
                 String batchName = "Primary Batch";
                 if ("true".Equals(batchFixed))
                 {
-                    batchName = ApplicationProperties.properties["batchName"].ToString();
+                    batchName = batchName.Replace("&#4;", "&#4;");
+                    batchName = batchName;
                 }
                 bATCHALLOCATIONSLIST.BATCHNAME = batchName;
                 bATCHALLOCATIONSLIST.DESTINATIONGODOWNNAME = mainLocation;

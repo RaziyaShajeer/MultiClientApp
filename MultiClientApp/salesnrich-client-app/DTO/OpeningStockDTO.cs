@@ -19,7 +19,11 @@ namespace SNR_ClientApp.DTO
         public int? quantity { get; set; }
 
         public DateTime createdDate { get; set; }
-
-        public DateTime openingStockDate { get; set; }
+		public string tallyCompany { get; set; }
+		public DateTime openingStockDate { get; set; }
+        public OpeningStockDTO()
+        {
+			tallyCompany = ApplicationProperties.properties["tally.company"].ToString();
+		}
     }
 }

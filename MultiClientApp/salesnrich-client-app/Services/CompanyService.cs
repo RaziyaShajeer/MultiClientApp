@@ -16,12 +16,12 @@ namespace SNR_ClientApp.Services
 {
     public class CompanyService
     {
-        Dictionary<string, string> props = new Dictionary<string, string>();
+       
         TallyCommunicator tallyCommunicator = new TallyCommunicator();
         internal async Task<List<CompanyDTO>> GetCompanies()
         {
             LogManager.WriteLog("listing company started...");
-            DataTable table = await tallyCommunicator.getdatatable("SELECT $Name,$Guid,$STATENAME FROM " + Tables.Company);
+            DataTable table = await tallyCommunicator.getdatatableofTAlly("SELECT $Name,$Guid,$STATENAME FROM " + Tables.Company);
 
             //object[] row = { table.Rows[0]["$Name"].ToString() };
             LogManager.WriteLog("listing company ended...");

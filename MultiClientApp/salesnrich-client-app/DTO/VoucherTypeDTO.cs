@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SNR_ClientApp.DTO
 {
-    internal class VoucherTypeDTO
+    public class VoucherTypeDTO
     {
         public String name { get; set; }
         public String parent { get; set; }

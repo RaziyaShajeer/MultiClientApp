@@ -3,9 +3,13 @@ using Newtonsoft.Json;
 using OfficeOpenXml;
 using SNR_ClientApp.Config;
 using SNR_ClientApp.DTO;
+using SNR_ClientApp.Enums;
 using SNR_ClientApp.Exceptions;
+using SNR_ClientApp.Parsers;
 using SNR_ClientApp.Properties;
 using SNR_ClientApp.Services;
+using SNR_ClientApp.Tally.generateXml;
+using SNR_ClientApp.Tally;
 using SNR_ClientApp.TallyResponses;
 using SNR_ClientApp.Utils;
 using System;
@@ -31,17 +35,20 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
         TallyService tallyService;
         //Dictionary<string, Object> props = new Dictionary<string, Object>();
         HttpClient httpClient;
-        private Lazy<Dictionary<string, object>> lazyProps = new Lazy<Dictionary<string, object>>(() => ApplicationProperties.getAllProperties());
-
-        // Property to access the lazy-loaded dictionary
-        public Dictionary<string, object> props => lazyProps.Value;
-
-        public TallyProperties2_UC()
+        private Lazy<Dictionary<string, object>> lazyProps = new Lazy<Dictionary<string, object>>(() => ApplicationProperties.getAllProperties(StringUtilsCustom.TALLY_COMPANY));
+        TallyCommunicator tallyCommunicator;
+		CashReciptVoucherTypeParser cashReciptVoucherTypeParser = new CashReciptVoucherTypeParser();
+		// Property to access the lazy-loaded dictionary
+		public Dictionary<string, object> props => lazyProps.Value;
+        LedgerNameUnderParentParser ledgerNameUnderParentParser = new LedgerNameUnderParentParser();
+		public TallyProperties2_UC()
         {
+            tallyCommunicator=new TallyCommunicator();  
             InitializeComponent();
             tallyService = new TallyService();
             LoadDefaultValues();
             httpClient=new HttpClient();
+          
 
         }
 
@@ -132,12 +139,13 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
         private async  void loadBankNames()
         {
             var Parent = "Bank Accounts";
-            String[] row = await tallyService.getAllLedgersByParent(Parent);
+
+            String[] row = await tallyService.getAllLedgersByParentBank(Parent);
             //var Parent = "Bank Accounts";
             string[] groups = await tallyService.getAllGroupsByParent(Parent);
             foreach (string group in groups)
             {
-                var res = await tallyService.getAllLedgersByParent(group);
+                var res = await tallyService.getAllLedgersByParentgroup(group);
                 //row.Append(res);
                 row = row.Concat(res).ToArray();
             }
@@ -241,9 +249,19 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
         }
         private async void loadReceiptVoucherTypes()
         {
+			ENVELOPE tallyRequest = new ENVELOPE();
+			LogManager.WriteLog("listing Cash Receipt Voucher Types started...");
+            
+			tallyRequest = CashRecieptVocherTypeGenerateXML.getAllReciptVoucherTypeGenerateXml("Receipt");
+			var stringwriter = new System.IO.StringWriter();
+			System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
+			x.Serialize(stringwriter, tallyRequest);
 
-            var vtypes = await tallyService.getAllCashReceiptVoucherTypes();
-            List<String> types = new List<String>();
+			var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
+
+			var vtypes = await cashReciptVoucherTypeParser.getAllReciptVochertypeParser(data);
+			LogManager.WriteLog("listing Cash Receipt Voucher Types ended...");
+			List<String> types = new List<String>();
             types.AddRange(vtypes);
             types.Add("Journal");
             String[] row = types.ToArray();
@@ -357,14 +375,53 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
             string[] groups = await tallyService.getAllGroupsByParent("Indirect Expenses");
             foreach (string group in groups)
             {
-                var res = await tallyService.getAllLedgersByParent(group);
+                var res = await tallyService.getAllLedgersByParentgroup(group);
                 //row.Append(res);
                 IndirectExpencesList = IndirectExpencesList.Concat(res).ToArray();
             }
             DiscountLedgerSelect.Items.Clear();
             DiscountLedgerSelect.Items.AddRange(IndirectExpencesList);
         }
+		
+		public void sendTallyCompanyName()
+        {
+			try
+			{
+                var tallyCompanyName = props["tally.company"].ToString();
+                var oldCompanyName = TallyUpdateform.oldCompanyname;
+               
+				//var myContent = JsonConvert.SerializeObject(tallyCompanyName);
+				HttpContent content = new StringContent(tallyCompanyName, Encoding.UTF8, "application/json");
+				string SaveTallyCompany = ApiConstants.SaveCompany + "?companyName=" + tallyCompanyName+ "&oldCompanyName=" + oldCompanyName; 
+				
 
+				httpClient = RestClientUtil.getClient();
+				var responseTask = httpClient.PostAsync(SaveTallyCompany, content);
+				responseTask.Wait();
+
+				HttpResponseMessage response = responseTask.Result;
+				LogManager.WriteResponseLog(response);
+
+
+				if (response.IsSuccessStatusCode)
+				{
+					LogManager.WriteLog("Posting TallyCompany  to Server Success..");
+					var response1 = response.Content.ReadAsStringAsync().Result;
+				}
+				else
+				{
+					LogManager.WriteLog("Posting TallyCompany  to Server Failed");
+					throw new ServiceException("Posting TallyCompany  to Server Failed");
+				}
+
+
+			}
+			catch (Exception ex)
+			{
+				LogManager.HandleException(ex);
+				throw ex;
+			}
+		}
         private void button2_Click(object sender, EventArgs e)
         {
             parentform.Cursor = Cursors.WaitCursor;
@@ -375,9 +432,10 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
                 sendPropertiesToAdmin();
 
                 
-                sendPropertiestoServer();
-                ApplicationProperties.updatePropertiesFile(StringUtilsCustom.TALLY_COMPANY);
-			var	resWriter = new ResXResourceWriter("ClientAppProps1.resx");
+              //  sendPropertiestoServer();
+                sendTallyCompanyName();
+				TallyConfigForm.isSettings = false;
+				//var	resWriter = new ResXResourceWriter("ClientAppProps1.resx");
 				var res = MessageBox.Show(
 								"Do you want to Add More Companies..?",
 								"SalesNrich",
@@ -387,9 +445,11 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
 							);
 				if (res == DialogResult.Yes)
 				{
+                    StringUtilsCustom.TALLY_COMPANY = null;
 					TallyConfigForm tallyConfigForm = new TallyConfigForm();
 					tallyConfigForm.Show();
 					this.Hide();
+					parentform.Hide();
 				}
 				else  
 				{
@@ -419,7 +479,9 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
 
         private void generateXmlFile()
         {
-            string filename = "PropertyFile-"+DateTime.Now.ToString("dd-MMM-yyyy-HH-mm")+".xlsx";
+
+
+			string filename = "PropertyFile-"+DateTime.Now.ToString("dd-MMM-yyyy-HH-mm")+".xlsx";
 
             GenerateExcelFile(ApplicationProperties.properties, filename);
             sendEmail(filename);
@@ -483,8 +545,12 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
         {
             try
             {
-                 ApplicationProperties.getAllProperties();
-                string ClientappPropertiestoServer = ApiConstants.CLIENTAPP_PROPERTIES_TO_SERVER;
+               
+      
+                var tallyCompanyName = props["tally.company"].ToString();
+            
+
+				string ClientappPropertiestoServer = ApiConstants.CLIENTAPP_PROPERTIES_TO_SERVER + "?tallyCompanyName=" + tallyCompanyName;
                 LogManager.WriteLog("updating  ClietappProperty Api:...."+ClientappPropertiestoServer);
                 LogManager.WriteLog(ClientappPropertiestoServer.ToString());
                 httpClient = RestClientUtil.getClient();
@@ -522,7 +588,9 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
             ApplicationProperties.properties["receipt.voucher.type.bank"] = BankReceiptVoucherTypeSelect.SelectedItem.ToString();
             ApplicationProperties.properties["receipt.voucher.type.cash"] = CashReceiptSelect.SelectedItem.ToString();
             ApplicationProperties.properties["isRoundOffEnabled"] = chk_RoundOff.Checked;
-            if (chk_RoundOff.Checked)
+            ApplicationProperties.properties["isFirstTimeCompanyLogin"] = "False";
+
+			if (chk_RoundOff.Checked)
             {
                 if (RoundOffLedgerSelect.SelectedItem != null)
                 {
@@ -568,7 +636,7 @@ namespace SNR_ClientApp.Windows.CustomControls.AutomationControls
                 }
 
 
-                ApplicationProperties.updatePropertiesFile();
+                ApplicationProperties.updatePropertiesFile(StringUtilsCustom.TALLY_COMPANY);
             }
         
 

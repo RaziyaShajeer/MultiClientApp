@@ -57,7 +57,10 @@ namespace SNR_ClientApp.Tally.generateXml
             List<LEDGERENTRIESLIST> alllegerEntriesList = new List<LEDGERENTRIESLIST>();
             string trimChar = config.trimChar == null ? "" : config.trimChar;
             string ledgerName = config.ledgerName+ trimChar;
-            Console.WriteLine(ledgerName);
+			if (ledgerName.Contains('~'))
+				ledgerName = ledgerName.Split('~')[0];
+       
+			Console.WriteLine(ledgerName);
             Console.WriteLine(trimChar);
             string companyName =ApplicationProperties.properties["tally.company"].ToString();
             string uuid = Guid.NewGuid().ToString();

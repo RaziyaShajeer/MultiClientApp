@@ -29,11 +29,18 @@ namespace SNR_ClientApp.Security
             //httpClient.BaseAddress = new Uri(baseUrl);
             httpClient.DefaultRequestHeaders.Clear();
         }
-        public HttpResponseMessage authenticateAsync(LoginDto loginDto)
-        { 
-     
+        public async Task<HttpResponseMessage> authenticateAsync(LoginDto loginDto)
+        {
 
-            CheckSecureConnection();
+			if (string.IsNullOrWhiteSpace(loginDto.username) || string.IsNullOrWhiteSpace(loginDto.password))
+
+			{
+				LogManager.WriteLog("Missing credentials before sending request");
+				
+
+			}
+
+			await CheckSecureConnection();
 
 
             //HttpClient httpClient = RestClientUtil.getClient();
@@ -42,21 +49,29 @@ namespace SNR_ClientApp.Security
             //httpClient.DefaultRequestHeaders.Clear();
             var myContent = JsonConvert.SerializeObject(loginDto);
             HttpContent inputContent = new StringContent(myContent, Encoding.UTF8, "application/json");
-            try
-            {
-                var responseTask = httpClient.PostAsync(ApiConstants.AUTHENTICATION, inputContent);
-                responseTask.Wait();
-           
-            HttpResponseMessage Res = responseTask.Result;
-                LogManager.WriteLog("Request : \n" + Res.RequestMessage.ToString());
-                LogManager.WriteLog("Response : \n StatusCode: " + Res.StatusCode.ToString());
-                if (Res.IsSuccessStatusCode)
+            try {
+				string baseUrl = ConfigurationManager.AppSettings["FullURL"];
+				string loginUrl = baseUrl.TrimEnd('/') + "/api/authenticate";
+
+				LogManager.WriteLog("Sending login request to: " + loginUrl);
+
+				var Res = await httpClient.PostAsync(loginUrl, inputContent);
+			//	var Res = await httpClient.PostAsync(ApiConstants.AUTHENTICATION, inputContent);
+				LogManager.WriteLog("Request sent to: " + ApiConstants.AUTHENTICATION);
+
+				LogManager.WriteLog("Status Code: " + Res.StatusCode);
+			
+
+
+
+				if (Res.IsSuccessStatusCode)
             {
                 LogManager.WriteLog("Login Success..");
-                    var rawResponse = Res.Content.ReadAsStringAsync().Result;
-                    LogManager.WriteLog("Raw Response Content: \n" + rawResponse); 
+
+					string rawResponse = await Res.Content.ReadAsStringAsync();
+					LogManager.WriteLog("Raw Response Content: \n" + rawResponse); 
                  
-                    var response = Res.Content.ReadAsStringAsync().Result;
+                    var response =await Res.Content.ReadAsStringAsync();
                 Token token = JsonConvert.DeserializeObject<Token>(response);
                 RestClientUtil.setAuthKey(token.id_token);
                     RestClientUtil.setLoggedUser(loginDto);
@@ -79,7 +94,7 @@ namespace SNR_ClientApp.Security
 
         }
 
-        private void CheckSecureConnection()
+        private async Task CheckSecureConnection()
         {
             try
             {
@@ -87,36 +102,37 @@ namespace SNR_ClientApp.Security
 
 
                 var baseUrl = ConfigurationManager.AppSettings["SecureURL"];
-               
-                httpClient.BaseAddress = new Uri(baseUrl);
-                var responseTask = httpClient.GetAsync("/");
-                responseTask.Wait();
+				LogManager.WriteLog("HttpClient BaseAddress: " + httpClient.BaseAddress?.ToString());
+		 // if you construct full URL
+				httpClient.BaseAddress = new Uri(baseUrl);
+                var responseTask =await httpClient.GetAsync("/");
+                //responseTask.Wait();
 
-                HttpResponseMessage Res = responseTask.Result;
-                LogManager.WriteLog("Request : \n" + Res.RequestMessage.ToString());
-                LogManager.WriteLog("Response : \n StatusCode: " + Res.StatusCode.ToString());
-                if (Res.IsSuccessStatusCode)
+               // HttpResponseMessage Res = responseTask.Result;
+                LogManager.WriteLog("Request : \n" + responseTask.RequestMessage.ToString());
+                LogManager.WriteLog("Response : \n StatusCode: " + responseTask.StatusCode.ToString());
+                if (responseTask.IsSuccessStatusCode)
                 {
                     LogManager.WriteLog("CheckSecureConnection Success..\n Switching to HTTPs secure url");
                     RestClientUtil.fullUrl=baseUrl;
                 }
                 else
                 {
-                    LogManager.WriteLog("CheckSecureConnection Failed..\n  statusCode: "+ Res.StatusCode+"\n content: "+ Res.Content.ToString()+"\n Switching to HTTP Non secure url");
+                    LogManager.WriteLog("CheckSecureConnection Failed..\n  statusCode: "+ responseTask.StatusCode+"\n content: "+ responseTask.Content.ToString()+"\n Switching to HTTP Non secure url");
                     //throw new AuthenticationException();
                 }
              
             }
             catch (Exception ex)
             {
-                httpClient=RestClientUtil.getClient();
+                httpClient= RestClientUtil.getClient();
                 LogManager.WriteLog("CheckSecureConnection Failed..\n  Switching to HTTP Non secure url");
 
                 LogManager.HandleException(ex, "Exception Occured while Calling server..");
             }
         }
 
-        internal void setDeviceKey()
+        internal async Task setDeviceKey()
         {
             String hardDiskNo = GetHardDiskSerialNumber();
            

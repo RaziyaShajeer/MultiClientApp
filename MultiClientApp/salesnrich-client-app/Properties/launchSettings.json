@@ -1,0 +1,9 @@
+{
+    "profiles": {
+        "SNR_ClientApp": {
+            "commandName": "Project",
+            "nativeDebugging": true,
+            "jsWebView2Debugging": false
+        }
+    }
+}

@@ -29,7 +29,8 @@ namespace SNR_ClientApp.Services
         public string companyName = ApplicationProperties.properties["tally.company"].ToString();
         private SalesVoucherLedgerTallymasterResponseParser salesVoucherLedgerTallymasterResponseParser;
         private SalesVoucherTallyMasterResponceMaster salesVoucherTallyMasterResponceMaster;
-        public SalesUploadService()
+        VoucherTypeResponseParser VoucherTypeResponseParser;
+		public SalesUploadService()
         {
             tallyCommunicator = new TallyCommunicator();
             httpClient = new HttpClient();
@@ -37,34 +38,37 @@ namespace SNR_ClientApp.Services
             tallyLedgerParent = ApplicationProperties.properties.GetValueOrDefault("tally.ledger.parent").ToString();
             salesVoucherLedgerTallymasterResponseParser = new SalesVoucherLedgerTallymasterResponseParser();
             salesVoucherTallyMasterResponceMaster = new SalesVoucherTallyMasterResponceMaster();
+            VoucherTypeResponseParser = new VoucherTypeResponseParser();
+
         }
         internal async Task getFromTallyAndUploadAsync(string date)
         {
             try
             {
+				String vouchertypeName = ApplicationProperties.properties["salesVoucherType"].ToString();
+				ENVELOPE tallyRequest = new ENVELOPE();
+				LogManager.WriteLog("listing voucherType started...");
+				tallyRequest = VoucherTypegenerateXml.getAllVoucherType();
+				var stringwriter = new System.IO.StringWriter();
+				System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
+				x.Serialize(stringwriter, tallyRequest);
 
-                DataTable response = new DataTable();
-                StringBuilder Query = new StringBuilder();
-                String vouchertypeName = ApplicationProperties.properties["salesVoucherType"].ToString();
-                Query.Append("select $name,$Parent  from " + Tables.VoucherType + " where $Parent= " + vouchertypeName);
+				var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
+				List<VoucherTypeDTO> voucherTypes = new List<VoucherTypeDTO>();
+				 voucherTypes   = await VoucherTypeResponseParser.GetAllvoucherType(data, vouchertypeName);
+				//DataTable response = new DataTable();
+    //            StringBuilder Query = new StringBuilder();
 
-                response = await tallyCommunicator.getdatatable(Query.ToString());
+    //            Query.Append("select $name,$Parent  from " + Tables.VoucherType + " where $Parent= " + vouchertypeName);
 
-                if (response.Rows.Count > 0)
-                {
-                 //   List<InventoryVoucherHeaderDTO> inventoryVoucherHeaderDTOs = new List<InventoryVoucherHeaderDTO>();
-                    List <VoucherTypeDTO> voucherTypes = new List<VoucherTypeDTO>();
-
-                    foreach (DataRow dr in response.Rows)
-                    {
-                        VoucherTypeDTO dto = new VoucherTypeDTO();
-                        dto.parent = (dr["$Parent"] != DBNull.Value) ? (string)dr["$Parent"] : "";
-                        dto.name = (dr["$name"] != DBNull.Value) ? (string)dr["$name"] : "";
+    //            response = await tallyCommunicator.getdatatable(Query.ToString());
 
 
-                        voucherTypes.Add(dto);
+               
+                              //   List<InventoryVoucherHeaderDTO> inventoryVoucherHeaderDTOs = new List<InventoryVoucherHeaderDTO>();
+                   
 
-                    }
+                  
                     if (voucherTypes.Count > 0)
                     {
                         // selected date generated sales Ledger names.
@@ -72,8 +76,8 @@ namespace SNR_ClientApp.Services
                         ENVELOPE tallyrequest = tallyMastersRequestXml.getDayWiseReceiptLedgerNames(companyName, date, voucherTypes);
 
 
-                        var stringwriter = new System.IO.StringWriter();
-                        System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyrequest.GetType());
+                     stringwriter = new System.IO.StringWriter();
+                     x = new System.Xml.Serialization.XmlSerializer(tallyrequest.GetType());
                         x.Serialize(stringwriter, tallyrequest);
 
                         var currntDayLedgerNames = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
@@ -121,7 +125,7 @@ namespace SNR_ClientApp.Services
 
 
 
-                }
+                
             }
             catch (Exception ex)
             {

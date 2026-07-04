@@ -3,8 +3,11 @@ using SNR_ClientApp.Config;
 using SNR_ClientApp.DTO;
 using SNR_ClientApp.Enums;
 using SNR_ClientApp.Exceptions;
+using SNR_ClientApp.Parsers;
 using SNR_ClientApp.Properties;
 using SNR_ClientApp.Tally;
+using SNR_ClientApp.Tally.generateXml;
+using SNR_ClientApp.TallyResponses;
 using SNR_ClientApp.Utils;
 using System;
 using System.Collections.Generic;
@@ -30,53 +33,54 @@ namespace SNR_ClientApp.Services
             tallyLedgerParent= ApplicationProperties.properties.GetValueOrDefault("tally.ledger.parent").ToString();
         }
         internal async  void getFromTallyAndUpload(bool isOptimise)
-        {
-            try { 
-            List<LocationDTO> _list = new List<LocationDTO>();
-            DataTable response = new DataTable();
-            StringBuilder Query = new StringBuilder();
-            Query.Append("SELECT $name,$alterid,$guid,$parent FROM " + Tables.Groups);
-            if (isOptimise)
-            {
-                long alterID = getAlterId();
+		{
+			try {
 
-                Query.Append(" where $Alterid >" + alterID);
-                fullUpdate = false;
-                //Query = "SELECT $name,$alterid,$guid FROM " + Tables.StockGroup + " where $Alterid >" + alterID;
-                //response = tallyCommunicator.getdatatable("SELECT $name,$alterid,$guid FROM " + Tables.StockGroup + " where $Alterid >"+alterID);
-            }
-            response = await tallyCommunicator.getdatatable(Query.ToString());
+				ENVELOPE tallyRequest = new ENVELOPE();
 
-            if (response.Rows.Count > 0)
-            {
+				tallyRequest = CompanygroupGenerateXml.getCompanyGroupsXml();
 
-                foreach (DataRow dr in response.Rows)
-                {
-                    LocationDTO locationDto = new LocationDTO();
-                    locationDto.locationId = ((string)dr["$guid"]);
-                    locationDto.name = (dr["$name"] != DBNull.Value) ? (string)dr["$name"] : "";
-                    locationDto.description = (dr["$parent"] != DBNull.Value) ? (string)dr["$parent"] : "";
-                  
-                    locationDto.alterId = (dr["$alterid"] != DBNull.Value) ? (long.Parse(dr["$alterid"].ToString())) : 0;
-                    
-                   
 
-                    _list.Add(locationDto);
+				var stringwriter = new System.IO.StringWriter();
+				System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
+				x.Serialize(stringwriter, tallyRequest);
 
-                }
+				var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
+				List<LocationDTO> _list = new List<LocationDTO>();
+				_list = AccountGroupResponseParser.CompanyGroupresponseParser(data);
 
-                List<LocationDTO> locationToServer = SundryDebterUnderLocaions(_list);
+				var myContent = JsonConvert.SerializeObject(_list);
+				LogManager.WriteLog(myContent.ToString());
+
+			
+            //if (isOptimise)
+            //{
+            //    long alterID = getAlterId();
+
+            //    Query.Append(" where $Alterid >" + alterID);
+            //    fullUpdate = false;
+            //    //Query = "SELECT $name,$alterid,$guid FROM " + Tables.StockGroup + " where $Alterid >" + alterID;
+            //    //response = tallyCommunicator.getdatatable("SELECT $name,$alterid,$guid FROM " + Tables.StockGroup + " where $Alterid >"+alterID);
+            //}
+         
+
+               
+
+					
+					List<LocationDTO> locationToServer = SundryDebterUnderLocaions(_list);
                 if (locationToServer.Count != 0)
                 {
                     LocationDTO locationDTO = new LocationDTO();
                     locationDTO.alterId = 0;
                     locationDTO.name = "Territory";
                     locationToServer.Add(locationDTO);
-                    upload(locationToServer);
+                    
+                        upload(locationToServer);
+                    LogManager.WriteLog("Location:" + locationToServer.Count);
                 }
   
                
-            }
+            
 			}
 			catch (Exception ex)
 			{
@@ -87,18 +91,17 @@ namespace SNR_ClientApp.Services
 
         private void upload(List<LocationDTO> locationToServer)
         {
-            string requestUri = ApiConstants.PREFIX + ApiConstants.LOCATION;//SNR_CLIENT_APP_L_1
+           
 
-			if (idClentApp.Equals("true", StringComparison.OrdinalIgnoreCase))
-            {
-                requestUri = ApiConstants.PREFIX + ApiConstants.LOCATION_ID;//SNR_CLIENT_APP_L_2
-			}
+			
+             string   requestUri = ApiConstants.PREFIX + ApiConstants.LOCATION;//SNR_CLIENT_APP_L_2
+			
             LogManager.WriteLog("uploading LOCATION started...");
             httpClient = RestClientUtil.getClient();
             var myContent = JsonConvert.SerializeObject(locationToServer);
             HttpContent inputContent = new StringContent(myContent, Encoding.UTF8, "application/json");
 
-            var responseTask = httpClient.PostAsync(requestUri + "/" + fullUpdate, inputContent);
+            var responseTask = httpClient.PostAsync(requestUri,inputContent);
 
             responseTask.Wait();
 

@@ -59,7 +59,9 @@ namespace SNR_ClientApp.Services
                 }
                 else
                 {
-                      serverAddress =  ApiConstants.DOWNLOAD_ORDER; 
+					var tallyCompanyName = ApplicationProperties.properties["tally.company"].ToString();
+
+					serverAddress =  ApiConstants.DOWNLOAD_ORDER+"?companyName=" + tallyCompanyName; 
                 }
                
                 string updatesalesOrderStatus = ApiConstants.UPDATE_ORDER_STATUS;

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace SNR_ClientApp.DTO
 {
-    internal class ProductGroupDTO
+    public class ProductGroupDTO
     {
         public String pid { get; set; }
         public double alterId = 0;
@@ -21,8 +21,8 @@ namespace SNR_ClientApp.DTO
         public String description { get; set; }
 
         public double taxRate { get; set; }
-
-        public String productGroupId { get; set; }
+		public string tallyCompanyName { get; set; }
+		public String productGroupId { get; set; }
         public ProductGroupDTO(string ProductGroupId,string Name,double Taxrate,double AlterId)
         {
             productGroupId = ProductGroupId;
@@ -30,9 +30,14 @@ namespace SNR_ClientApp.DTO
             displayName = Name;
             alterId = AlterId;
             taxRate = Taxrate;
+			tallyCompanyName = ApplicationProperties.properties["tally.company"].ToString();
 			this.name = DistributedCodeAppend.appendDistributedCode(Name);
 			this.distributorCode = ApplicationProperties.properties["DistributedCode"].ToString();
 			this.distributorName = ApplicationProperties.properties["DistributedCodeCompany"].ToString();
         }
+
+		public ProductGroupDTO()
+		{
+		}
 	}
 }

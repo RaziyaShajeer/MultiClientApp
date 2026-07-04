@@ -101,7 +101,7 @@
 			flowLayoutPanel1.Size = new Size(299, 575);
 			flowLayoutPanel1.TabIndex = 3;
 			flowLayoutPanel1.WrapContents = false;
-			
+			flowLayoutPanel1.Paint += flowLayoutPanel1_Paint_1;
 			// 
 			// panel3
 			// 
@@ -144,6 +144,7 @@
 			companySelect.Name = "companySelect";
 			companySelect.Size = new Size(248, 27);
 			companySelect.TabIndex = 51;
+			companySelect.SelectedIndexChanged += companySelect_SelectedIndexChanged;
 			// 
 			// btn_downloadReceipt
 			// 
@@ -322,6 +323,7 @@
 			employeeList.Size = new Size(248, 27);
 			employeeList.TabIndex = 64;
 			employeeList.Visible = false;
+			employeeList.SelectedIndexChanged += employeeList_SelectedIndexChanged;
 			// 
 			// panel1
 			// 
@@ -345,6 +347,7 @@
 			Controls.Add(DownloadTabMainPanel);
 			Name = "UC_Download";
 			Size = new Size(800, 575);
+			Load += UC_Download_Load;
 			DownloadTabMainPanel.ResumeLayout(false);
 			flowLayoutPanel1.ResumeLayout(false);
 			panel3.ResumeLayout(false);

@@ -62,6 +62,7 @@ namespace SNR_ClientApp.Services
                     if (pgToServer.Count() > 0)
                     {
                         upload(pgToServer);
+                        LogManager.WriteLog("ClosingBalance:" + pgToServer.Count);
                     }
                 }
             }catch(Exception ex)
@@ -75,12 +76,8 @@ namespace SNR_ClientApp.Services
         {
             try
             {
-                string requestUri = ApiConstants.PREFIX + ApiConstants.ACCOUNT_PROFILE_CLOSING_BALANCE;
-
-                if (idClentApp.Equals("true", StringComparison.OrdinalIgnoreCase))
-                {
-                    requestUri = ApiConstants.PREFIX + ApiConstants.ACCOUNT_PROFILE_CLOSING_BALANCE_ID;
-                }
+                string requestUri = ApiConstants.PREFIX + ApiConstants.ACCOUNT_PROFILE_CLOSING_BALANCE_ID;
+                
                 LogManager.WriteLog("Uploading AccountProfileDTO ClosingBalance data to server....");
                 LogManager.WriteLog("Calling server with url : " + requestUri);
                 httpClient = RestClientUtil.getClient();

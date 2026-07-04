@@ -2,7 +2,10 @@
 using SNR_ClientApp.Config;
 using SNR_ClientApp.DTO;
 using SNR_ClientApp.Enums;
+using SNR_ClientApp.Parsers;
 using SNR_ClientApp.Tally;
+using SNR_ClientApp.Tally.generateXml;
+using SNR_ClientApp.TallyResponses;
 using SNR_ClientApp.Utils;
 using System;
 using System.Collections.Generic;
@@ -17,10 +20,12 @@ namespace SNR_ClientApp.Services
     {
         TallyCommunicator tallyCommunicator;
         HttpClient httpClient;
-        public GstLedgersService()
+        GST_LedgerParse gST_LedgerParse;
+		public GstLedgersService()
         {
             tallyCommunicator = new TallyCommunicator();
             httpClient = new HttpClient();
+            gST_LedgerParse=new GST_LedgerParse();
         }
         internal async  void getFromTallyAndUpload()
         {
@@ -31,7 +36,8 @@ namespace SNR_ClientApp.Services
                 if (allGstLedgerspTally.Count > 0)
                 {
                     upload(allGstLedgerspTally);
-                }
+					LogManager.WriteLog("GstLedgers" + allGstLedgerspTally.Count);
+				}
             }catch(Exception e)
             {
 				LogManager.HandleException(e);
@@ -42,48 +48,18 @@ namespace SNR_ClientApp.Services
 
         public async Task< List<GstLedgerDTO>>  getAllGstLedgers(String parent)
         {
-            List<GstLedgerDTO> allGstLedgerspTally = new List<GstLedgerDTO>();
-            DataTable response = new DataTable();
-            StringBuilder Query = new StringBuilder();
-			Query.Append("SELECT $name, $parent, $TAXTYPE, $SUBTAXTYPE, $RATEOFTAXCALCULATION, $Guid, $GSTDUTYHEAD FROM "
-			  + Tables.Ledger + " WHERE $parent = '" + parent + "'");
 
-			response = await  tallyCommunicator.getdatatable(Query.ToString());
+			ENVELOPE tallyRequest = new ENVELOPE();
+			tallyRequest= GSTLedgerGenerateXML.GstLedgerGenerateXmlcloud(parent);
+			var stringwriter = new System.IO.StringWriter();
+			System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
+			x.Serialize(stringwriter, tallyRequest);
 
-
-            //StringBuilder Query2 = new StringBuilder();
-            //Query2.Append("select $name from " + Tables.Groups + " where $parent = "+parent);
-            //DataTable innergroups= tallyCommunicator.getdatatable(Query2.ToString());
-            //if(innergroups.Rows.Count > 0)
-            //{
-
-            //}
-
-            if (response.Rows.Count > 0)
-            {
-                foreach (DataRow dr in response.Rows)
-                {
-                    string taxtype = (dr["$TAXTYPE"] != DBNull.Value) ? (string)dr["$TAXTYPE"] : ""; 
-                    if (taxtype.Equals("GST", StringComparison.OrdinalIgnoreCase))
-                    {
-
-                        GstLedgerDTO dto = new GstLedgerDTO();
-
-                        dto.name = (dr["$name"] != DBNull.Value) ? (string)dr["$name"] : "";
-                        dto.accountType = GstAccountType.DUTIES_AND_TAXES;
-                        dto.taxType = (dr["$TAXTYPE"] != DBNull.Value) ? (string)dr["$TAXTYPE"] : "";
-                        dto.taxRate = (dr["$RATEOFTAXCALCULATION"] != DBNull.Value) ? StringUtilsCustom.ExtractDoubleValue(dr["$RATEOFTAXCALCULATION"].ToString()) : 0;
-                        dto.activated = false;
-                        dto.gstDutyHead = (dr["$GSTDUTYHEAD"] != DBNull.Value) ? (string)dr["$GSTDUTYHEAD"] : "";
-                        allGstLedgerspTally.Add(dto);
-
-                    }
-                }
-
-
-               
-                       }
-            return allGstLedgerspTally;
+			var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
+			List<GstLedgerDTO> _list = new List<GstLedgerDTO>();
+			_list =gST_LedgerParse.getAllGstLEdgers(data);
+			
+            return _list;
         }
 
         private void upload(List<GstLedgerDTO> allGstLedgerspTally)

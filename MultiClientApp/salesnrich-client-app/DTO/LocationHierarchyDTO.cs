@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SNR_ClientApp.Properties;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,11 +12,12 @@ namespace SNR_ClientApp.DTO
         public String locationName { get; set; }
 
         public String parentName { get; set; }
-
-        public LocationHierarchyDTO(LocationDTO locationDTO)
+		public string tallyCompanyNmae { get; set; }
+		public LocationHierarchyDTO(LocationDTO locationDTO)
         {
             this.locationName = locationDTO.name;
             this.parentName = locationDTO.description;
-        }
+			tallyCompanyNmae = ApplicationProperties.properties["tally.company"].ToString();
+		}
     }
 }

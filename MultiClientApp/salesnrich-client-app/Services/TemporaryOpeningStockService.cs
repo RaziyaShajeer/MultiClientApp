@@ -76,7 +76,8 @@ namespace SNR_ClientApp.Services
                 }
                 if (opstkToServer.Count > 0)
                 {
-                    res = upload(opstkToServer);
+					LogManager.WriteLog("Temperory Stock" + opstkToServer.Count);
+					res =await upload(opstkToServer);
                     return res;
                 }
                    
@@ -92,7 +93,7 @@ namespace SNR_ClientApp.Services
 
         }
 
-        private bool upload(List<OpeningStockDTO> list)
+        private async Task<bool> upload(List<OpeningStockDTO> list)
         {
             try
             {
@@ -107,24 +108,24 @@ namespace SNR_ClientApp.Services
                 var myContent = JsonConvert.SerializeObject(list);
                 HttpContent inputContent = new StringContent(myContent, Encoding.UTF8, "application/json");
 
-                var responseTask = httpClient.PostAsync(requestUri, inputContent);
+                var responseTask =await httpClient.PostAsync(requestUri, inputContent);
 
-                responseTask.Wait();
+                //responseTask.Wait();
 
-                HttpResponseMessage Res = responseTask.Result;
+              //  HttpResponseMessage Res = responseTask.Result;
                 LogManager.WriteLog("Uploading Opening Stock  To Server Completed ....\n Response : ");
-                LogManager.WriteResponseLog(Res);
+                LogManager.WriteResponseLog(responseTask);
 
-                if (Res.IsSuccessStatusCode)
+                if (responseTask.IsSuccessStatusCode)
                 {
                     LogManager.WriteLog("request for uploading Opening Stock   Success..");
-                    var response = Res.Content.ReadAsStringAsync().Result;
+                    var response = responseTask.Content.ReadAsStringAsync();
                     return true;
                 }
                 else
                 {
                     LogManager.WriteLog("request for uploading Opening Stock   Failed..");
-                    throw new ServiceException("uploading Opening Stock   Failed \n \n Response Status code : "+Res.StatusCode);
+                    throw new ServiceException("uploading Opening Stock   Failed \n \n Response Status code : "+ responseTask.StatusCode);
                     return false;
                 }
             }

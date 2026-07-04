@@ -3,8 +3,11 @@ using SNR_ClientApp.Config;
 using SNR_ClientApp.DTO;
 using SNR_ClientApp.Enums;
 using SNR_ClientApp.Exceptions;
+using SNR_ClientApp.Parsers;
 using SNR_ClientApp.Properties;
 using SNR_ClientApp.Tally;
+using SNR_ClientApp.Tally.generateXml;
+using SNR_ClientApp.TallyResponses;
 using SNR_ClientApp.Utils;
 using System;
 using System.Collections.Generic;
@@ -19,7 +22,8 @@ namespace SNR_ClientApp.Services
     {
         public static readonly String FILE_NAME = "product-group-product-profile";
         TallyCommunicator tallyCommunicator = new TallyCommunicator();
-        HttpClient httpClient = new HttpClient();
+        StockitemParser stockitemParser=new StockitemParser();  
+		HttpClient httpClient = new HttpClient();
 
         private string idClentApp = ApplicationProperties.properties.GetValueOrDefault("idclientapp").ToString();
         internal async void getFromTallyAndUpload()
@@ -27,70 +31,54 @@ namespace SNR_ClientApp.Services
             try
             {
                 List<TPProductGroupProductDTO> _list = new List<TPProductGroupProductDTO>();
-
-                DataTable response = new DataTable();
-                StringBuilder Query = new StringBuilder();
-                Query.Append("select $name,$_FirstAlias,$Parent,$Guid,$Category,$RateOfMrp,$ModifyMRPRate,$OpeningRate," +
-                    "$RateOfVat,$BaseUnits,$AdditionalUnits,$Conversion,$Denominator,$IsBatchWiseOn,$_HSNCode,$Description," +
-                    "$Narration,$AlterID from " + Tables.StockItem);
-                long alterid = getAlterIdFromServer();
-                if (alterid > 0)
-                {
-                    Query.Append(" where $Alterid >" + alterid);
-                }
-
-                response = await tallyCommunicator.getdatatable(Query.ToString());
-
-                if (response.Rows.Count > 0)
-                {
-
-                    foreach (DataRow dr in response.Rows)
-                    {
-                        TPProductGroupProductDTO tpProductGroupProductDTO = new TPProductGroupProductDTO();
-                        //Todo : check this line , make sure productId is Guid of stock item
-                        tpProductGroupProductDTO.productId = (dr["$Guid"] != DBNull.Value) ? (string)dr["$Guid"] : "";
-						if (ApplicationProperties.properties["IsEnableDistributor"].ToString().Equals("true", StringComparison.OrdinalIgnoreCase))
-                        {
-							 var name=(dr["$parent"] != DBNull.Value) ? (string)dr["$parent"] : "";
-							tpProductGroupProductDTO.groupName =DistributedCodeAppend.appendDistributedCode(name);
-
-                        }
-                        else
-                        {
-							tpProductGroupProductDTO.groupName = (dr["$parent"] != DBNull.Value) ? (string)dr["$parent"] : "";
-						}
-							
-                        tpProductGroupProductDTO.productName = (dr["$name"] != DBNull.Value) ? (string)dr["$name"] : "";
-                        tpProductGroupProductDTO.alterId = (dr["$AlterID"] != DBNull.Value) ? long.Parse(dr["$AlterID"].ToString()) : 0;
+                ENVELOPE tallyRequest = new ENVELOPE();
 
 
-                        _list.Add(tpProductGroupProductDTO);
-                    }
-					//List<TPProductGroupProductDTO> updatedList = getAlterIdFromServer(_list);
-					var myContent = JsonConvert.SerializeObject(_list);
-                    LogManager.WriteLog(myContent.ToString());
-					if (_list.Count>0)
-						
+              
+                tallyRequest = StockItemGroupXML.getCompanystockitemXml();
 
-					
-                        upload(_list);
-                }
-			}
-			catch (Exception ex)
-			{
-				LogManager.HandleException(ex);
-				throw ex;
-			}
+
+                var stringwriter = new System.IO.StringWriter();
+                System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyRequest.GetType());
+                x.Serialize(stringwriter, tallyRequest);
+
+                var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
+				TPProductGroupProductDTO tpProductGroupProductDTO = new TPProductGroupProductDTO();
+                _list = stockitemParser.getAllProductGroupsproduct(data);
+
+				
+			
+			//if (alterid > 0)
+   //         {
+   //             Query.Append(" where $Alterid >" + alterid);
+   //         } 
+
+
+          
+                var myContent = JsonConvert.SerializeObject(_list);
+                LogManager.WriteLog(myContent.ToString());
+                if (_list.Count > 0)
+
+					LogManager.WriteLog("GroupWise Item Upload" + _list.Count);
+
+				upload(_list);
+            }
+        
+            catch (Exception ex)
+            {
+                LogManager.HandleException(ex);
+                throw ex;
+            }
 		}
 
         private void upload(List<TPProductGroupProductDTO> list)
         {
-            string requestUri = ApiConstants.PREFIX + ApiConstants.PRODUCTGROUP_PRODUCTPROFILE;
+           
 
-            if (idClentApp.Equals("true", StringComparison.OrdinalIgnoreCase))
-            {
-                requestUri = ApiConstants.PREFIX + ApiConstants.PRODUCTGROUP_PRODUCTPROFILE_ID;
-            }
+         
+
+              string  requestUri = ApiConstants.PREFIX + ApiConstants.PRODUCTGROUP_PRODUCTPROFILE_ID;
+            
             LogManager.WriteLog("uploading PRODUCTGROUP_PRODUCTPROFILE started...");
             httpClient = RestClientUtil.getClient();
             var myContent = JsonConvert.SerializeObject(list);

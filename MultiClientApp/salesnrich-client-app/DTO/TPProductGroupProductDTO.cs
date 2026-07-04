@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace SNR_ClientApp.DTO
 {
-    internal class TPProductGroupProductDTO
+    public class TPProductGroupProductDTO
     {
         private static readonly long serialVersionUID = 1L;
         public String productId { get;set; }
@@ -16,6 +16,12 @@ namespace SNR_ClientApp.DTO
         public String groupName { get; set; }
 
 		public string distributorCode = ApplicationProperties.properties["DistributedCode"].ToString();
+		public string tallyCompanyName { get; set; }
+        public TPProductGroupProductDTO()
+        {
+			tallyCompanyName = ApplicationProperties.properties["tally.company"].ToString();
+		}
+		
 
 	}
 }

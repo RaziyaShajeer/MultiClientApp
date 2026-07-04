@@ -6,7 +6,7 @@
 		<Nullable>enable</Nullable>
 		<UseWindowsForms>true</UseWindowsForms>
 		<ImplicitUsings>enable</ImplicitUsings>
-		<ApplicationIcon>logo.ico</ApplicationIcon>
+		<ApplicationIcon>favicon.ico</ApplicationIcon>
 		<StartupObject>SNR_ClientApp.Program</StartupObject>
 		<PackageIcon>logo.png</PackageIcon>
 		<AssemblyName>SalesNrich</AssemblyName>
@@ -21,7 +21,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Content Include="logo.ico" />
+		<Content Include="favicon.ico" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -192,7 +192,7 @@ namespace SNR_ClientApp.Services
                             {
                                 totalSuccessCount = totalSuccessCount + resp.SuccessOrders.Count;
                                 //LogManager.WriteLog(+resp.SuccessOrders.Count + " Reciept is downloaded");
-                                //uC_Logger.AppendLogMsg(+resp.SuccessOrders.Count + " Reciept is downloaded");
+                              // uC_Logger.AppendLogMsg(+resp.SuccessOrders.Count + " Reciept is downloaded");
                             }
                             if (resp.FailedOrders.Count > 0)
                             {
@@ -202,7 +202,8 @@ namespace SNR_ClientApp.Services
                                 string updatesalesOrderFailedStatus = ApiConstants.UPDATE_RECEIPT_STATUS_PENDING;
                                 HttpContent content2 = new StringContent(JsonConvert.SerializeObject(resp.FailedOrders), Encoding.UTF8, "application/json");
                                 HttpResponseMessage updateResult = httpClient.PostAsync(updatesalesOrderFailedStatus, content2).Result;
-                            }
+								//uC_Logger.AppendLogMsg(+resp.FailedOrders.Count + " Reciept is downloaded");
+							}
                             if (resp.isLedgerMissmatch)
                             {
                                 string joinedString = string.Join(" \n", resp.failedOrdersLineErrors);
@@ -311,8 +312,9 @@ namespace SNR_ClientApp.Services
                     TallyDownloadResponse data = await tallyCommunicator.UploadDataToTally(stringwriter.ToString());
                     if (data != null)
                     {
-                        if (data.response.ERRORS > 0)
+                        if (data.response.ERRORS > 0 || data.response.EXCEPTIONS>0)
                         {
+                            failedReceipts.Add(tallyRequest.pid);
                             LogManager.WriteLog("Receipt post Failed For ............." + tallyRequest.pid + "\n LineError : " + data.response.LINEERROR);
 
 							if (!String.IsNullOrEmpty(data.response.LINEERROR))
@@ -327,19 +329,24 @@ namespace SNR_ClientApp.Services
 									//UC_Download.showMessage("Order Creation Failed \n"+data.response.LINEERROR);
 								}
 								failedLineErrors.Add(mainString);
-								//if (data.response.LINEERROR.Contains("sdfdsf")
+
+                                //if (data.response.LINEERROR.Contains("sdfdsf")
+                         
 							}
 
 							throw new ServiceException(data.response.LINEERROR);
+
                         }
                         else
                         {
-                            LogManager.WriteLog("Receipt post success .............." + tallyRequest.pid);
                             successReceipts.Add(tallyRequest.pid);
+                            LogManager.WriteLog("Receipt post success .............." + tallyRequest.pid);
+                
                         }
                     }
                     else
                     {
+                        failedReceipts.Add (tallyRequest.pid);  
                         LogManager.WriteLog("Receipt post failed  ......." );
 						throw new ServiceException("Orders post failed for " + tallyRequest.pid);
 					}
@@ -373,7 +380,9 @@ namespace SNR_ClientApp.Services
         {
 
             try
-            {
+			{
+				var tallyCompanyName = ApplicationProperties.properties["tally.company"].ToString();
+			
                 List<SalesOrderDTO> salesOrderDTOs = new();
                 String formattedDate = salesDate.Value.ToString("yyyy-MM-dd");
 
@@ -382,18 +391,18 @@ namespace SNR_ClientApp.Services
                 {
                     if (ApplicationProperties.properties["enable.Selecteddate"].ToString().Equals("true",StringComparison.OrdinalIgnoreCase))
                     {
-                        serverAddress = ApiConstants.DOWNLOAD_RECEIPT + "?salesDate=" + formattedDate;
+                        serverAddress = ApiConstants.DOWNLOAD_RECEIPT + "?salesDate=" + formattedDate + "&companyName=" + tallyCompanyName;
                         string updateReceiptStatus = ApiConstants.UPDATE_RECEIPT_STATUS + "?salesDate=" + formattedDate;
                     }
                     else
                     {
-                        serverAddress = ApiConstants.DOWNLOAD_RECEIPT;
+                        serverAddress = ApiConstants.DOWNLOAD_RECEIPT_MULTI + "?companyName=" + tallyCompanyName;
                         string updateReceiptStatus = ApiConstants.UPDATE_RECEIPT_STATUS;
                     }
                 }
                 else
                 {
-                    serverAddress = ApiConstants.DOWNLOAD_RECEIPT_NOT_OPTIMIZED;
+                    serverAddress = ApiConstants.DOWNLOAD_RECEIPT_MULTI + "?companyName=" + tallyCompanyName;
                 }
                  
               
@@ -442,7 +451,12 @@ namespace SNR_ClientApp.Services
                 string newUuid = Guid.NewGuid().ToString();
 
                 string ledgerName = receiptDTO.ledgerName;
-            String companyName = CompanyService.getCompanyName();
+			string trimChar = receiptDTO.trimChar == null ? "" : receiptDTO.trimChar;
+		ledgerName = receiptDTO.ledgerName + trimChar;
+			if (ledgerName.Contains('~'))
+				ledgerName = ledgerName.Split('~')[0];
+
+			//String companyName = CompanyService.getCompanyName();
             char[] str = (newUuid).ToCharArray();
                 string RemoteId = KeyGeneratorUtil.GetRandomCustomString(str, 6) + "-" + ledgerName;
                 String dates = receiptDTO.date;
@@ -538,7 +552,7 @@ namespace SNR_ClientApp.Services
                   
 
                     voucher.VOUCHERTYPENAME = receiptVoucherTypeCash;
-                    voucher.VOUCHERNUMBER = receiptDTO.provisionalReceiptNo != null ? receiptDTO.provisionalReceiptNo : "1";
+                    voucher.VOUCHERNUMBER = (!string.IsNullOrEmpty(receiptDTO.provisionalReceiptNo)) ? receiptDTO.provisionalReceiptNo : "1";
                     //  
 
                 }
@@ -568,7 +582,7 @@ namespace SNR_ClientApp.Services
                    
 
                     voucher.VOUCHERTYPENAME = receiptVoucherTypeBank;
-                    voucher.VOUCHERNUMBER = (receiptDTO.provisionalReceiptNo != null ? receiptDTO.provisionalReceiptNo : "1");
+                    voucher.VOUCHERNUMBER = !string.IsNullOrEmpty(receiptDTO.provisionalReceiptNo)? receiptDTO.provisionalReceiptNo : "1";
 
                 }
                 else if (receiptDTO.mode == PaymentMode.RTGS)
@@ -596,7 +610,7 @@ namespace SNR_ClientApp.Services
                 }
 
                     voucher.VOUCHERTYPENAME = receiptVoucherTypeBank;
-                    voucher.VOUCHERNUMBER = (receiptDTO.provisionalReceiptNo != null ? receiptDTO.provisionalReceiptNo : "1");
+                    voucher.VOUCHERNUMBER = !string.IsNullOrEmpty(receiptDTO.provisionalReceiptNo) ? receiptDTO.provisionalReceiptNo : "1";
 
                 }
 
@@ -649,15 +663,18 @@ namespace SNR_ClientApp.Services
                 //generate individual receipt 
 
                 StringBuilder builder = new StringBuilder();
-                string trimChar = receiptDTO.trimChar == null ? "" : receiptDTO.trimChar;
-                string ledgerName1 = StringUtilsCustom.replaceSpecialCharactersWithXmlValue(receiptDTO.particularsName) + trimChar;
+                 trimChar = receiptDTO.trimChar == null ? "" : receiptDTO.trimChar;
+      ledgerName = StringUtilsCustom.replaceSpecialCharactersWithXmlValue(receiptDTO.particularsName) + trimChar;
+
                 ALLLEDGERENTRIESLIST aLLLEDGERENTRIESLIST = new ALLLEDGERENTRIESLIST();
                // OLDAUDITENTRYIDSLIST oLDAUDITENTRYIDSLIST1 = new();
                 oLDAUDITENTRYIDSLIST.TYPE = "Number";
                 oLDAUDITENTRYIDSLIST.OLDAUDITENTRYIDS = "-1";
 
                 aLLLEDGERENTRIESLIST.OLDAUDITENTRYIDSLIST = oLDAUDITENTRYIDSLIST;
-                aLLLEDGERENTRIESLIST.LEDGERNAME = receiptDTO.particularsName;
+			if (receiptDTO.particularsName.Contains('~'))
+				receiptDTO.particularsName = receiptDTO.particularsName.Split('~')[0];
+			aLLLEDGERENTRIESLIST.LEDGERNAME = receiptDTO.particularsName;
                 aLLLEDGERENTRIESLIST.GSTCLASS = "";
                 aLLLEDGERENTRIESLIST.ISDEEMEDPOSITIVE = "No";
                 aLLLEDGERENTRIESLIST.LEDGERFROMITEM = "No";

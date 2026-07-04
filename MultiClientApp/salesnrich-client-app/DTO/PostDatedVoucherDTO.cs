@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SNR_ClientApp.Properties;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -33,5 +34,6 @@ namespace SNR_ClientApp.DTO
 		public String instrumentDate { get; set; }
 
 		public String pdcReceiptDate { get; set; }
+		
 	}
 }

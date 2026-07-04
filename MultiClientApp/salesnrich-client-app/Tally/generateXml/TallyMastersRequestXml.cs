@@ -69,9 +69,10 @@ namespace SNR_ClientApp.Tally.generateXml
             SYSTEM system = new SYSTEM();
             system.NAME = "dateSearch";
             system.TYPE = "Formulae";
-            //system.Text = StringUtilsCustom.ConvertFormat(date);
-            system.Text = "$$String:$Date = $$String:\""+date+"\" ";
-            systemsList.Add(system);
+			//system.Text = StringUtilsCustom.ConvertFormat(date);
+			system.Text = "$$Date:$Date=$$Date:\"" + date + "\"";
+
+			systemsList.Add(system);
             SYSTEM system2 = new SYSTEM();
             system2.NAME = "ofSpecificVchs";
             system2.TYPE = "Formulae";
@@ -751,9 +752,9 @@ namespace SNR_ClientApp.Tally.generateXml
             SYSTEM system = new SYSTEM();
             system.NAME = "dateSearch";
             system.TYPE = "Formulae";
-            //system.Text = StringUtilsCustom.ConvertFormat(date);
-            system.Text = "$$String:$Date = $$String:\"" + date + "\" ";
-            systemsList.Add(system);
+			//system.Text = StringUtilsCustom.ConvertFormat(date);
+			system.Text = "$$Date:$Date=$$Date:\"" + date + "\"";
+			systemsList.Add(system);
             SYSTEM system2 = new SYSTEM();
             system2.NAME = "ofSpecificVchs";
             system2.TYPE = "Formulae";

@@ -45,14 +45,17 @@ namespace SNR_ClientApp.Tally
                 try
                 {
 					var ns = new XmlSerializerNamespaces();
-					ns.Add("UDF", "http://schemas.sdk"); // prefix "UDF" maps to your namespace URI
+					ns.Add("UDF", "TallyUDF"); // prefix "UDF" maps to your namespace URI
 
 					var serializer = new XmlSerializer(tallyRequest.xmlObj.GetType());
 					var stringwriter = new StringWriter();
 					serializer.Serialize(stringwriter, tallyRequest.xmlObj, ns);
-					
-                    LogManager.WriteLog(stringwriter.ToString());
-                    TallyDownloadResponse data = await tallyCommunicator.UploadDataToTally(stringwriter.ToString());
+					string xmlString = stringwriter.ToString();
+					xmlString = FixGodownEntities(xmlString);  // <-- Fix the numeric entity
+					TallyDownloadResponse data = await tallyCommunicator.UploadDataToTally(xmlString);
+					LogManager.WriteLog(stringwriter.ToString());
+                   // TallyDownloadResponse data = null ;
+                  
                     LogManager.WriteLog(data.response.ToString());
                  
                     if (data != null)
@@ -115,23 +118,23 @@ namespace SNR_ClientApp.Tally
                     //return new TallyResponse("OK", "Orders post to tally failed", successOrders);
                 }
             }
-            foreach (var masterId in masterIds)
-            {
-                ENVELOPE voucherIds = await salesOrderGenerateXmlfromMaster.GenerateSalesOrderVoucherNumberfromMastrerId(masterId.Key.ToString());
-                var stringwriter = new System.IO.StringWriter();
-                System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(voucherIds.GetType());
-                x.Serialize(stringwriter, voucherIds);
+            //foreach (var masterId in masterIds)
+            //{
+            //    ENVELOPE voucherIds = await salesOrderGenerateXmlfromMaster.GenerateSalesOrderVoucherNumberfromMastrerId(masterId.Key.ToString());
+            //    var stringwriter = new System.IO.StringWriter();
+            //    System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(voucherIds.GetType());
+            //    x.Serialize(stringwriter, voucherIds);
 
-                var voucherIdListquery = await tallyCommunicator.ExecXml(stringwriter.ToString());
-                SalesStatusDTO salesOrderDetails = new SalesStatusDTO();
-                foreach (var voucher in voucherIdListquery.response.BODY.DATA.COLLECTION.VOUCHER)
-                {
-                    salesOrderDetails.invPid=masterId.Value;
-                    salesOrderDetails.voucherNo=voucher.VOUCHERNUMBER;
+            //    var voucherIdListquery = await tallyCommunicator.ExecXml(stringwriter.ToString());
+            //    SalesStatusDTO salesOrderDetails = new SalesStatusDTO();
+            //    foreach (var voucher in voucherIdListquery.response.BODY.DATA.COLLECTION.VOUCHER)
+            //    {
+            //        salesOrderDetails.invPid=masterId.Value;
+            //        salesOrderDetails.voucherNo=voucher.VOUCHERNUMBER;
 
-                    salesStatusDTOS.Add(salesOrderDetails);
-                }
-            }
+            //        salesStatusDTOS.Add(salesOrderDetails);
+            //    }
+            //}
 
             //object wrappedObject = salesStatusDTOS;
             LogManager.WriteLog(salesStatusDTOS.ToString());
@@ -167,8 +170,16 @@ namespace SNR_ClientApp.Tally
             resp.isLedgerMissmatch= isLedgerMissmatch;
 			return new TallyResponse("OK", "Orders post to tally successfully", resp);
         }
+		private static string FixGodownEntities(string xml)
+		{
+			// Replace &amp;#4; with &#4; only inside specific nodes
+			xml = Regex.Replace(xml,
+				@"(?<=<(GODOWNNAME|BATCHNAME|DESTINATIONGODOWNNAME)>)&amp;#4;", "&#4;",
+				RegexOptions.IgnoreCase);
 
-        public async Task<TallyResponse> postReceiptsToTallyAsync(List<TallyXml> receipts)
+			return xml;
+		}
+		public async Task<TallyResponse> postReceiptsToTallyAsync(List<TallyXml> receipts)
         {
             LogManager.WriteLog("postReceiptsToTally ................" + receipts.Count);
             List<String> successReceipts = new List<String>();

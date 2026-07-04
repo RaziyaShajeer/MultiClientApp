@@ -76,6 +76,7 @@ namespace SNR_ClientApp.Services
 
 
                     upload(pcToServer);
+                    LogManager.WriteLog("PostDated Voucher"+pcToServer.Count);  
                 }
 
 

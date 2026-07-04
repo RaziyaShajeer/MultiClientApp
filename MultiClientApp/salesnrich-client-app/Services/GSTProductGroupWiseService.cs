@@ -3,8 +3,10 @@ using SNR_ClientApp.Config;
 using SNR_ClientApp.DTO;
 using SNR_ClientApp.Enums;
 using SNR_ClientApp.Exceptions;
+using SNR_ClientApp.Parsers;
 using SNR_ClientApp.Properties;
 using SNR_ClientApp.Tally;
+using SNR_ClientApp.Tally.generateXml;
 using SNR_ClientApp.Utils;
 using System;
 using System.Collections.Generic;
@@ -23,53 +25,42 @@ namespace SNR_ClientApp.Services
         private bool fullUpdate = true;
         private string idClentApp;
         private String GSTNames = ApplicationProperties.properties.GetValueOrDefault("tally.gst").ToString();
-        public GSTProductGroupWiseService()
+        ProductGroupProductGSTxmlParser productGroupProductGSTxmlParser;
+		public GSTProductGroupWiseService()
         {
             tallyCommunicator = new TallyCommunicator();
             httpClient = new HttpClient();
             idClentApp = ApplicationProperties.properties.GetValueOrDefault("idclientapp").ToString();
+            productGroupProductGSTxmlParser = new ProductGroupProductGSTxmlParser();    
         }
         internal async void getFromTallyAndUpload()
         {
-            try { 
-            List<GSTProductGroupWiseDTO> pgToServer = new List<GSTProductGroupWiseDTO>();
-            DataTable response = new DataTable();
-            StringBuilder Query = new StringBuilder();
-                //skip group having 0 taxes,if we need tax by item wise must be added to another product group that does'nt have any tax rate
-            Query.Append("SELECT $guid, $name, $taxtype, $gst_taxability, $_HSNCode, $_IntegratedTax, $_CentralTax, $_StateTax, $_CGST, $_SGST/UTGST, $_IGST FROM " + Tables.StockGroup + " WHERE $_IntegratedTax <> 0");
-           
-            response = await tallyCommunicator.getdatatable(Query.ToString());
+            try {
 
-            if (response.Rows.Count > 0)
-            {
+                var tallyrequest=GroupWiseGSTMaterGenerateXML.groupwiseGstMasterGenerateXML();
+				var stringwriter = new System.IO.StringWriter();
+				System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(tallyrequest.GetType());
+				x.Serialize(stringwriter, tallyrequest);
 
-                foreach (DataRow dr in response.Rows)
-                {
-                    GSTProductGroupWiseDTO productGroupDTO = new GSTProductGroupWiseDTO();
-                    //productGroupDTO.productGroupName = ((string)dr["$guid"]);
-                    // productGroupDTO.alterId = ((double)dr["$alterid"]);
-                    productGroupDTO.productGroupName = (dr["$name"] != DBNull.Value) ? ((string)dr["$name"]) : "";
-                    productGroupDTO.hsnsacCode = (dr["$_HSNCode"] != DBNull.Value) ? ((string)dr["$_HSNCode"]) : "";
-                    productGroupDTO.taxType = (dr["$taxtype"] != DBNull.Value) ? ((string)dr["$taxtype"]) : "";
-                        productGroupDTO.integratedTax =(dr["$_IntegratedTax"] != DBNull.Value && !string.IsNullOrEmpty(dr["$_IntegratedTax"].ToString()))?dr["$_IntegratedTax"].ToString():"";
-                        //? dr["$_IntegratedTax"].ToString()
-                        //           productGroupDTO.integratedTax = (dr["$_IntegratedTax"] != DBNull.Value && !string.IsNullOrEmpty(dr["$_IntegratedTax"].ToString()))
-                        //? dr["$_IntegratedTax"].ToString()
-                        //: (dr["$_IGST"] != DBNull.Value && !string.IsNullOrEmpty(dr["$_IGST"].ToString()))
-                        //    ? dr["$_IGST"].ToString()
-                        //    : "";
-                        productGroupDTO.centralTax = (dr["$_CentralTax"] != DBNull.Value) ? (dr["$_CentralTax"].ToString()) : "";
-                    productGroupDTO.stateTax = (dr["$_StateTax"] != DBNull.Value) ? (dr["$_StateTax"].ToString()) : "";
+				var data = await tallyCommunicator.ExecXmlAndGetXmlAsync(stringwriter.ToString());
 
 
-                    pgToServer.Add(productGroupDTO);
 
-                }
-               
-            }
-            
-                if (pgToServer.Count>0)
-                upload(pgToServer);
+
+				List<GSTProductGroupWiseDTO> pgToServer = new List<GSTProductGroupWiseDTO>();
+                pgToServer=productGroupProductGSTxmlParser.parseGstProductgroupparser(data);
+                LogManager.WriteLog("GroupWiseGST");
+				var myContent = JsonConvert.SerializeObject(pgToServer);
+				LogManager.WriteLog(myContent.ToString());
+
+				//skip group having 0 taxes,if we need tax by item wise must be added to another product group that does'nt have any tax rate
+
+
+
+
+				if (pgToServer.Count>0)
+					LogManager.WriteLog("Group Wise Gst" + pgToServer.Count);
+				upload(pgToServer);
 			}
 			catch (Exception ex)
 			{
